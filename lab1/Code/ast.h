@@ -22,7 +22,7 @@ struct ast {
 
 extern struct ast *astRoot;
 
-extern "C" struct ast *newAst(char* , int, ...);
+struct ast *newAst(char* , int, ...);
 void travesalAst(struct ast*, int);
 void reportError(struct ast*, int);
 #endif
