@@ -1,10 +1,7 @@
 #ifndef __AST_H__
 #define __AST_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
+#include "common.h"
 
 struct ast {
     int line_no;

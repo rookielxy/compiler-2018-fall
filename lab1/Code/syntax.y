@@ -1,6 +1,5 @@
 %{
 
-#include <stdio.h>
 #include "ast.h"
 #include "lex.yy.c"
 

@@ -1,10 +1,5 @@
-#include <iostream>
-#include <cstdlib>
-#include <cstdio>
-#include <vector>
 #include "ast.h"
 
-using namespace std;
 
 extern FILE* yyin;
 extern int yylval;

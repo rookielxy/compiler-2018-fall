@@ -2,10 +2,10 @@
 # ************ 遇到不明白的地方请google以及阅读手册 *************
 
 # 编译器设定和编译选项
-CC = g++
+CXX = g++
 FLEX = flex
 BISON = bison
-CFLAGS = -std=c99
+CPPFLAGS = -w -std=c++11
 
 # 编译目标：src目录下的所有.cpp文件
 CFILES = $(shell find ./ -name "*.cpp")
@@ -18,10 +18,10 @@ LFO = $(LFC:.c=.o)
 YFO = $(YFC:.c=.o)
 
 parser: syntax $(filter-out $(LFO),$(OBJS))
-	$(CC) -o parser $(filter-out $(LFO),$(OBJS) -ll -ly
+	$(CXX)  $(CPPFLAGS)  -o parser $(YFO) $(filter-out $(LFO),$(OBJS)) -ll -ly
 
 syntax: lexical syntax-c
-	$(CC) -c $(YFC) -o $(YFO)
+	$(CXX)  $(CPPFLAGS)  -c $(YFC) -o $(YFO)
 
 lexical: $(LFILE)
 	$(FLEX) -o $(LFC) $(LFILE)
@@ -55,16 +55,8 @@ debug:
 	bison -d -v -t syntax.y
 	g++ syntax.tab.c ast.c main.c -ly -o parser -D YY_DEBUG
 
-fake:
-	flex -o lex.yy.c lexical.l
-	bison -o syntax.tab.c -d -v syntax.y
-	g++ -c syntax.tab.c -o syntax.tab.o
-	g++ -c -o main.o main.cpp
-	g++ -c -o ast.o ast.cpp
-	g++ -o parser main.o ast.o syntax.tab.o -ll -ly
-
 clean:
-	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
+	rm -f parser lex.yy.c $(filter-out $(YFILE), $(shell find ./ -name "syntax.*"))
 	rm -f $(OBJS) $(OBJS:.o=.d)
 	rm -f $(LFC) $(YFC) $(YFC:.c=.h)
 	rm -f *~
