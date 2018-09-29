@@ -1,4 +1,4 @@
-#include "ast.h"
+    #include "ast.h"
 
 extern int out;
 AstNode *astRoot = nullptr;
@@ -10,7 +10,14 @@ string DICT[] = {
     "Tag", "VarDec", "FunDec", "VarList",
     "ParamDec", "CompSt", "StmtList",
     "Stmt", "DefList", "Def", "DecList",
-    "Dec", "Exp", "Args"
+    "Dec", "Exp", "Args",
+
+    "TYPE", "STRUCT", "IF", "ELSE",
+    "WHILE", "RETURN", "INT", "FLOAT",
+    "ID", "SEMI", "COMMA", "ASSIGNOP",
+    "RELOP", "PLUS", "MINUS", "STAR",
+    "DIV", "AND", "OR", "DOT", "NOT",
+    "LP", "RP", "LB", "RB", "LC", "RC"
 };
 
 void printError(char* msg, char type, int lineno) {
@@ -71,11 +78,11 @@ void travesalAst(AstNode *root, int indent) {
     cout << DICT[root->tag];
     if (root->first_child == nullptr) {
         if (root->tag == TAG_ID || root->tag == TAG_TYPE)
-            cout << " " << root->str;
+            cout << ": " << root->str;
         else if (root->tag == TAG_INT)
-            cout << " " << root->ival;
+            cout << ": " << root->ival;
         else if (root->tag == TAG_FLOAT)
-            cout << " " << root->fval;
+            cout << ": " << root->fval;
         cout << endl;
         return;
     }
