@@ -1,15 +1,25 @@
 #include "ast.h"
 
 extern int out;
-struct ast *astRoot = NULL;
+AstNode *astRoot = nullptr;
+
+string DICT[] = {
+    "Program", "ExtDefList", "ExtDef",
+    "Error", "ExtDecList", "Specifier",
+    "StructSpecifier", "OptTag", "Empty",
+    "Tag", "VarDec", "FunDec", "VarList",
+    "ParamDec", "CompSt", "StmtList",
+    "Stmt", "DefList", "Def", "DecList",
+    "Dec", "Exp", "Args"
+};
 
 void printError(char* msg, char type, int lineno) {
     fprintf(stderr, "Error type \033[31m%c\033[0m at Line \033[31m%d\033[0m: %s\033[0m\n", type, lineno, msg);
 }
 
-void reportError(struct ast* root, int lineno) {
-    struct ast* child = root->first_child;
-    while (child != NULL) {
+void reportError(AstNode* root, int lineno) {
+    AstNode* child = root->first_child;
+    while (child != nullptr) {
         if (child->error_type > 0)
             return;
         child = child->first_sibling;
@@ -21,58 +31,57 @@ void reportError(struct ast* root, int lineno) {
 
 }
 
-struct ast *newAst(char* name, int n, ...) {
+AstNode *newAst(enum Tag tag, int n, ...) {
 	va_list valist;
     va_start(valist, n);
 
-    struct ast *root = (struct ast*)malloc(sizeof(struct ast));
-    root->name = name;
+    auto root = new AstNode();
+    root->tag = tag;
     root->error_type = 0;
-    root->first_child = NULL;
-    root->first_sibling = NULL;
+    root->first_child = nullptr;
+    root->first_sibling = nullptr;
 
-    if (n > 0) {
-        struct ast *child = va_arg(valist, struct ast*);
+    if(n > 0) {
+        AstNode *child = va_arg(valist, AstNode*);
         root->line_no = child->line_no;
         root->first_child = child;
-        int i = 1;
-        //printf("%s %s\n", root->name, child->name);
-		for (; i < n; i++) {
-            child->first_sibling = va_arg(valist, struct ast*);
+        
+		for(int i = 1; i < n; ++i) {
+            child->first_sibling = va_arg(valist, AstNode*);
             child = child->first_sibling;
       		//printf("%s %s\n", root->name, child->name);
 		}
     }
     else {
         root->line_no = va_arg(valist, int);
-		root->first_child = root->first_sibling = NULL;
+		root->first_child = root->first_sibling = nullptr;
 	}
 
 	va_end(valist);
 	return root;
 }
 
-void travesalAst(struct ast *root, int indent) {
-	if (root == NULL)
+void travesalAst(AstNode *root, int indent) {
+	if (root == nullptr)
 		return;
-	if (strcmp(root->name, "EMPTY") == 0)
+	if (root->tag == TAG_EMPTY)
 		return;
     for (int i = 0; i < 2 * indent; ++i)
-        printf(" ");
-    printf("%s", root->name);
-    if (root->first_child == NULL) {
-        if (strcmp(root->name, "ID") == 0 || strcmp(root->name, "TYPE") == 0)
-            printf(": %s", root->id);
-        else if (strcmp(root->name, "INT") == 0)
-            printf(": %d", root->ival);
-        else if (strcmp(root->name, "FLOAT") == 0)
-            printf(": %f", root->fval);
-        printf("\n");
+        cout << " ";
+    cout << DICT[root->tag];
+    if (root->first_child == nullptr) {
+        if (root->tag == TAG_ID || root->tag == TAG_TYPE)
+            cout << " " << root->str;
+        else if (root->tag == TAG_INT)
+            cout << " " << root->ival;
+        else if (root->tag == TAG_FLOAT)
+            cout << " " << root->fval;
+        cout << endl;
         return;
     }
-    printf(" (%d)\n", root->line_no);
-    struct ast *child = root->first_child;
-    while (child != NULL) {
+    cout << " (" << root->line_no << ")" << endl;;
+    AstNode *child = root->first_child;
+    while (child != nullptr) {
         travesalAst(child, indent + 1);
         child = child->first_sibling;
     }
