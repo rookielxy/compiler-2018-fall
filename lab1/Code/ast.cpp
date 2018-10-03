@@ -20,8 +20,8 @@ string DICT[] = {
     "LP", "RP", "LB", "RB", "LC", "RC"
 };
 
-void printError(char* msg, char type, int lineno) {
-    fprintf(stderr, "Error type \033[31m%c\033[0m at Line \033[31m%d\033[0m: %s\033[0m\n", type, lineno, msg);
+static void printError(string msg, char type, int lineno) {
+    printf("Error type \033[31m%c\033[0m at Line \033[31m%d\033[0m: %s\n", type, lineno, msg.c_str());
 }
 
 void reportError(AstNode* root, int lineno) {
@@ -58,8 +58,7 @@ AstNode *newAst(enum Tag tag, int n, ...) {
             child = child->first_sibling;
       		//printf("%s %s\n", root->name, child->name);
 		}
-    }
-    else {
+    } else {
         root->line_no = va_arg(valist, int);
 		root->first_child = root->first_sibling = nullptr;
 	}
@@ -69,14 +68,14 @@ AstNode *newAst(enum Tag tag, int n, ...) {
 }
 
 void travesalAst(AstNode *root, int indent) {
-	if (root == nullptr)
+	if(root == nullptr)
 		return;
-	if (root->tag == TAG_EMPTY)
+	if(root->tag == TAG_EMPTY)
 		return;
-    for (int i = 0; i < 2 * indent; ++i)
+    for(int i = 0; i < 2 * indent; ++i)
         cout << " ";
     cout << DICT[root->tag];
-    if (root->first_child == nullptr) {
+    if(root->first_child == nullptr) {
         if (root->tag == TAG_ID || root->tag == TAG_TYPE)
             cout << ": " << root->str;
         else if (root->tag == TAG_INT)
@@ -88,7 +87,7 @@ void travesalAst(AstNode *root, int indent) {
     }
     cout << " (" << root->line_no << ")" << endl;;
     AstNode *child = root->first_child;
-    while (child != nullptr) {
+    while(child != nullptr) {
         travesalAst(child, indent + 1);
         child = child->first_sibling;
     }

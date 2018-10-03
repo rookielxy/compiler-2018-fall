@@ -153,7 +153,7 @@ Args: Exp COMMA Args                            { $$ = newAst(TAG_ARGS, 3, $1, $
 
 
 #define reportError(type, lineno, format, ...) \
-printf("Error type %s at Line %d: " format "\n", type, lineno, ## __VA_ARGS__); \
+printf("Error type \033[31m%s\033[0m at Line \033[31m%d\033[0m: " format "\n", type, lineno, ## __VA_ARGS__); \
 
 void yyerror(char *msg) {
   reportError("B", yylineno, "%s", msg);
