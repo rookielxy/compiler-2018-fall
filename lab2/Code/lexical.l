@@ -2,21 +2,19 @@
 
 %{
 
+#include <string.h>
 #include "syntax.tab.h"
 
-#define LEX_DEBUG
+//#define LEX_DEBUG
 
-void debug(string msg) {
+void debug(char *msg) {
 #ifdef LEX_DEBUG
-	if(msg == "annotation")
-		cout << yylineno << ": annotation" << endl;
+	if(strcmp(msg, "annotation") == 0)
+		printf("%d: annotation\n", yylineno);
 	else
-		cout << yylineno << ": " << msg << ": " << yytext << endl;
+		printf("%d: %s: %s\n", yylineno, msg, yytext);
 #endif
-}
 
-static void printError(string msg) {
-	printf("Error type \033[31mA\033[0m at line \033[31m%d\033[0m: %s %s\n", yylineno, msg.c_str(), yytext);
 }
 
 %}
@@ -37,16 +35,17 @@ oct         0{digit_8}*
 hex         0[Xx]{digit_16}+
 dec         [+\-]?[1-9]{digit}*
 
-float       ({dec}\.{digit}*)|(\.{digit}+)
-exp         ({dec}|{float})[Ee]{dec}
+flo         ({dec}\.{digit}*)|(\.{digit}+)
+exp         ({dec}|{flo})[Ee]{dec}
 
-FLOAT       {float}|{exp}
+INT         {oct}|{dec}|{hex}
+FLOAT       {flo}|{exp}
 
 letter      [_a-zA-Z]
 
 single      \/\/[^\n]*\n
 multi       \/\*[^*]*\*+([^*/][^*]*\*+)*\/
-annotation  {single}|{multi}
+anno        {single}|{multi}
 leftNoStar	\/\*[^*]*
 leftStar    \/\*[^*]*\*+([^*/][^*]*\*+)*([^*/][^*]*)
 left		{leftNoStar}|{leftStar}
@@ -72,16 +71,16 @@ RB          \]
 LC          \{
 RC          \}
 
-exphead		{dec}|{float}
-wrong_float	({exphead}[Ee]{float})|({exphead}[Ee][^ \n\t;]*)|([Ee]{float})
+exphd		{dec}|{flo}
+wrflo		({exphd}[Ee]{flo})|({exphd}[Ee][^ \n\t;]*)|([Ee]{flo})
 
 %%
 
 {ws}        { /* take no action */ }
 
 {TYPE}      { debug("TYPE");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_TYPE, 0, yylineno);
-			  leaf->str = string(yytext);
+			  struct ast *leaf = yylval.type_ast = newAst(TAG_TYPE, 0, yylineno);
+			  strcpy(leaf->u.str, yytext);
 			  return TYPE;
 			}
 
@@ -91,34 +90,22 @@ wrong_float	({exphead}[Ee]{float})|({exphead}[Ee][^ \n\t;]*)|([Ee]{float})
 {WHILE}     { debug("WHILE");   yylval.type_ast = newAst(TAG_WHILE, 0, yylineno);      return WHILE; }
 {RETURN}    { debug("RETURN");  yylval.type_ast = newAst(TAG_RETURN, 0, yylineno);     return RETURN; }
 
-{oct}       { debug("OCT");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_INT, 0, yylineno);
-			  sscanf(yytext, "%o", &leaf->ival);
-			  return INT;
-			}
 
-{dec}       { debug("DEC");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_INT, 0, yylineno);
-			  sscanf(yytext, "%d", &leaf->ival);
-			  return INT;
-			}
-
-
-{hex}       { debug("HEX");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_INT, 0, yylineno);
-			  sscanf(yytext, "%x", &leaf->ival);
+{INT}       { debug("INT");
+			  struct ast *leaf = yylval.type_ast = newAst(TAG_INT, 0, yylineno);
+			  leaf->u.ival = atoi(yytext);
 			  return INT;
 			}
 
 {FLOAT}     { debug("FLOAT");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_FLOAT, 0, yylineno);
-			  sscanf(yytext, "%f", &leaf->fval);
+			  struct ast *leaf = yylval.type_ast = newAst(TAG_FLOAT, 0, yylineno);
+			  leaf->u.fval = atof(yytext);
 			  return FLOAT; 
 			}
 
 {ID}        { debug("ID");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_ID, 0, yylineno);
-			  leaf->str = string(yytext);
+			  struct ast *leaf = yylval.type_ast = newAst(TAG_ID, 0, yylineno);
+			  strcpy(leaf->u.str, yytext);
 			  return ID; }
 
 
@@ -141,10 +128,10 @@ wrong_float	({exphead}[Ee]{float})|({exphead}[Ee][^ \n\t;]*)|([Ee]{float})
 {LC}        { debug("LC");      yylval.type_ast = newAst(TAG_LC, 0, yylineno);         return LC; }
 {RC}        { debug("RC");      yylval.type_ast = newAst(TAG_RC, 0, yylineno);         return RC; }
 
-{annotation}   	{ debug("annotation"); }
-{wrong_float}	{ printError("Illegal float number: "); }
-{left}      	{ printError("Unterminated annotation: "); }
-{right}     	{ printError("Unmatched end of annotation: "); }
-.           	{ printError("Mysterious characters: "); }
+{anno}      { debug("annotation"); }
+{wrflo}		{ printf("Error type \033[31mA\033[0m at line \033[31m%d\033[0m: Illegal float number \'%s\'\n", yylineno, yytext); }
+{left}      { printf("Error type \033[31mA\033[0m at Line \033[31m%d\033[0m: unterminated annotaion \'%s\'", yylineno, yytext); }
+{right}     { printf("Error type \033[31mA\033[0m at Line \033[31m%d\033[0m: alone end of multiline annotation \'%s\'\n", yylineno, yytext); }
+.           { printf("Error type \033[31mA\033[0m at Line \033[31m%d\033[0m: Myterious characters \'%s\'\n", yylineno, yytext); }
 
 %%
