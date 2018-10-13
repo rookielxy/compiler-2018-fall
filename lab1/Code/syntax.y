@@ -6,7 +6,7 @@
 extern int yylex();
 extern void yyerror(char *msg);
 extern int yylineno;
-extern int out;
+extern bool syntaxCorrect;
 
 %}
 
@@ -34,9 +34,14 @@ extern int out;
 %type <type_ast> Exp Args
 
 /* Priority */
+%right ASSIGNOP
+%left OR
+%left AND
+%left RELOP
+%left PLUS MINUS
+%left STAR DIV
+%right NOT
 %left LP RP LB RB DOT
-%left STAR DIV PLUS MINUS RELOP AND OR
-%right NOT ASSIGNOP
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
@@ -47,16 +52,15 @@ extern int out;
 Program: ExtDefList                             { $$ = astRoot = newAst(TAG_PROGRAM, 1, $1); }
     ;
 ExtDefList: ExtDef ExtDefList                   { $$ = newAst(TAG_EXT_DEF_LIST, 2, $1, $2); }
-/*    | ExtDef error                              { $$ = newAst(TAG_ERROR, 2, $1, $2); $$->error_type = 9; reportError($$->error_type, yylineno); out = 0; }*/
     | /* empty */                               { $$ = newAst(TAG_EMPTY, 0); }
     ;
 ExtDef: Specifier ExtDecList SEMI               { $$ = newAst(TAG_EXT_DEF, 3, $1, $2, $3); }
     | Specifier SEMI                            { $$ = newAst(TAG_EXT_DEF, 2, $1, $2); }
     | Specifier FunDec CompSt                   { $$ = newAst(TAG_EXT_DEF, 3, $1, $2, $3); }
-/*  | Specifier FunDec error                    { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 5; reportError($$, yylineno); out = 0; }*/
-    | Specifier ExtDecList error                { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 8; /*reportError($$, yylineno);*/ out = 0; }
-    | error SEMI                                { $$ = newAst(TAG_ERROR, 2, $1, $2); $$->error_type = 10; /*reportError($$, yylineno);*/ out = 0; }
+    | Specifier ExtDecList error                { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 8;  syntaxCorrect = false; }
+    | error SEMI                                { $$ = newAst(TAG_ERROR, 2, $1, $2); $$->error_type = 10;  syntaxCorrect = false; }
     ;
+
 ExtDecList: VarDec                              { $$ = newAst(TAG_EXT_DEC_LIST, 1, $1); }
     | VarDec COMMA ExtDecList                   { $$ = newAst(TAG_EXT_DEC_LIST, 3, $1, $2, $3); }
 
@@ -88,10 +92,8 @@ ParamDec: Specifier VarDec                      { $$ = newAst(TAG_PARAM_DEC, 2, 
 
 /* Statements */
 CompSt: LC DefList StmtList RC                  { $$ = newAst(TAG_COMPST, 4, $1, $2, $3, $4); }
-    | LC DefList StmtList error                 { $$ = newAst(TAG_ERROR, 4, $1, $2, $3, $4); $$->error_type = 7; /*reportError($$, yylineno);*/ out = 0; }
     ;
 StmtList: Stmt StmtList                         { $$ = newAst(TAG_STMT_LIST, 2, $1, $2); }
-/*  | Stmt error                                { $$ = newAst(TAG_ERROR, 2, $1, $2); $$->error_type = 122; reportError($$, yylineno); out = 0; }*/
     | /* empty */                               { $$ = newAst(TAG_EMPTY, 0); }
     ;
 Stmt: Exp SEMI                                  { $$ = newAst(TAG_STMT, 2, $1, $2); }
@@ -100,10 +102,9 @@ Stmt: Exp SEMI                                  { $$ = newAst(TAG_STMT, 2, $1, $
     | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE	{ $$ = newAst(TAG_STMT, 5, $1, $2, $3, $4, $5); }
     | IF LP Exp RP Stmt ELSE Stmt               { $$ = newAst(TAG_STMT, 7, $1, $2, $3, $4, $5, $6, $7); }
     | WHILE LP Exp RP Stmt                      { $$ = newAst(TAG_STMT, 5, $1, $2, $3, $4, $5); }
-/*  | Exp error                                 { $$ = newAst(TAG_ERROR, 2, $1, $2); $$->error_type = 111; reportError($$, yylineno); out = 0; } */
-    | error SEMI                                { $$ = newAst(TAG_ERROR, 2, $1, $2); $$->error_type = 1; /*reportError($$, yylineno)*/; out = 0; }
-    | WHILE LP error RP Stmt                    { $$ = newAst(TAG_ERROR, 5, $1, $2, $3, $4, $5); $$->error_type = 3; /*reportError($$, yylineno);*/ out = 0; }
-    | RETURN error SEMI                         { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 14; /*reportError($$, yylineno);*/ out = 0; }
+    | error SEMI                                { $$ = newAst(TAG_ERROR, 2, $1, $2); $$->error_type = 1; syntaxCorrect = false; }
+    | WHILE LP error RP Stmt                    { $$ = newAst(TAG_ERROR, 5, $1, $2, $3, $4, $5); $$->error_type = 3; syntaxCorrect = false; }
+    | RETURN error SEMI                         { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 14; syntaxCorrect = false; }
 
     ;
 
@@ -111,10 +112,9 @@ Stmt: Exp SEMI                                  { $$ = newAst(TAG_STMT, 2, $1, $
 DefList: Def DefList                            { $$ = newAst(TAG_DEF_LIST, 2, $1, $2); }
     | /* empty */                               { $$ = newAst(TAG_EMPTY, 0); }
     ;
-Def: Specifier DecList SEMI                     { $$ = newAst(TAG_DEF, 3, $1, $2, $3); }
-    | Specifier error SEMI                      { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 4; /*reportError($$, yylineno);*/ out = 0; }
-    | Specifier DecList error                   { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 2; /*reportError($$, yylineno);*/ out = 0; }
-    | Specifier Dec error                       { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 11; /*reportError($$, yylineno);*/ out = 0; }
+Def:  Specifier DecList SEMI                    { $$ = newAst(TAG_DEF, 3, $1, $2, $3); }
+    | Specifier error SEMI                      { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 4; /*reportError($$, yylineno);*/ syntaxCorrect = false; }
+    | Specifier DecList error                   { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 2; /*reportError($$, yylineno);*/ syntaxCorrect = false; }
     ;
 DecList: Dec                                    { $$ = newAst(TAG_DEC_LIST, 1, $1); }
     | Dec COMMA DecList                         { $$ = newAst(TAG_DEC_LIST, 3, $1, $2, $3); }
@@ -142,8 +142,8 @@ Exp:  Exp ASSIGNOP Exp                          { $$ = newAst(TAG_EXP, 3, $1, $2
     | ID                                        { $$ = newAst(TAG_EXP, 1, $1); }
     | INT                                       { $$ = newAst(TAG_EXP, 1, $1); }
     | FLOAT                                     { $$ = newAst(TAG_EXP, 1, $1); }
-    | ID LP error RP                            { $$ = newAst(TAG_ERROR, 4, $1, $2, $3, $4); $$->error_type = 10; /*reportError($$, yylineno);*/ out = 0; }
-    | Exp LB error RB                           { $$ = newAst(TAG_ERROR, 4, $1, $2, $3, $4); $$->error_type = 6; /*reportError($$, yylineno);*/ out = 0; }
+    | ID LP error RP                            { $$ = newAst(TAG_ERROR, 4, $1, $2, $3, $4); $$->error_type = 10; /*reportError($$, yylineno);*/ syntaxCorrect = false; }
+    | Exp LB error RB                           { $$ = newAst(TAG_ERROR, 4, $1, $2, $3, $4); $$->error_type = 6; /*reportError($$, yylineno);*/ syntaxCorrect = false; }
     ;
 Args: Exp COMMA Args                            { $$ = newAst(TAG_ARGS, 3, $1, $2, $3); }
     | Exp                                       { $$ = newAst(TAG_ARGS, 1, $1); }

@@ -1,6 +1,6 @@
     #include "ast.h"
 
-extern int out;
+extern bool syntaxCorrect;
 AstNode *astRoot = nullptr;
 
 string DICT[] = {

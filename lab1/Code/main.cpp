@@ -3,7 +3,8 @@
 
 extern FILE* yyin;
 extern int yylval;
-int out;
+bool syntaxCorrect = true;
+#define YY_DEBUG6
 #ifdef YY_DEBUG
 extern int yydebug;
 #endif
@@ -14,7 +15,6 @@ extern int yyrestart(FILE *);
 
 
 int main(int argc , char **argv) {
-    out = 1;
 	if (argc <= 1)
 		return 1;
 	FILE *f = fopen(argv[1], "r");
@@ -28,7 +28,7 @@ int main(int argc , char **argv) {
 	yydebug = 1;
 #endif
 	yyparse();
-    if (out == 1)
+    if (syntaxCorrect)
 	    travesalAst(astRoot, 0);
 	return 0;
 }

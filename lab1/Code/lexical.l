@@ -3,8 +3,8 @@
 %{
 
 #include "syntax.tab.h"
-
-#define LEX_DEBUG
+extern bool syntaxCorrect;
+// #define LEX_DEBUG
 
 void debug(string msg) {
 #ifdef LEX_DEBUG
@@ -15,7 +15,8 @@ void debug(string msg) {
 #endif
 }
 
-static void printError(string msg) {
+static void reportError(string msg) {
+	syntaxCorrect = false;
 	printf("Error type \033[31mA\033[0m at line \033[31m%d\033[0m: %s %s\n", yylineno, msg.c_str(), yytext);
 }
 
@@ -119,8 +120,8 @@ wrong_float	({exphead}[Ee]{float})|({exphead}[Ee][^ \n\t;]*)|([Ee]{float})
 {ID}        { debug("ID");
 			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_ID, 0, yylineno);
 			  leaf->str = string(yytext);
-			  return ID; }
-
+			  return ID; 
+			}
 
 {SEMI}      { debug("SEMI");    yylval.type_ast = newAst(TAG_SEMI, 0, yylineno);       return SEMI; }
 {COMMA}     { debug("COMMA");   yylval.type_ast = newAst(TAG_COMMA, 0, yylineno);      return COMMA; }
@@ -142,9 +143,9 @@ wrong_float	({exphead}[Ee]{float})|({exphead}[Ee][^ \n\t;]*)|([Ee]{float})
 {RC}        { debug("RC");      yylval.type_ast = newAst(TAG_RC, 0, yylineno);         return RC; }
 
 {annotation}   	{ debug("annotation"); }
-{wrong_float}	{ printError("Illegal float number: "); }
-{left}      	{ printError("Unterminated annotation: "); }
-{right}     	{ printError("Unmatched end of annotation: "); }
-.           	{ printError("Mysterious characters: "); }
+{wrong_float}	{ reportError("Illegal float number: "); }
+{left}      	{ reportError("Unterminated annotation: "); }
+{right}     	{ reportError("Unmatched end of annotation: "); }
+.           	{ reportError("Mysterious characters: "); }
 
 %%
