@@ -10,6 +10,9 @@
 #include <cstdarg>
 #include <cstdio>
 
+// #define LEX_DEBUG
+// #define YY_DEBUG
+
 using namespace std;
 
 #endif

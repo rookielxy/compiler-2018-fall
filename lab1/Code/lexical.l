@@ -37,7 +37,7 @@ digit_8     [0-7]
 digit_16    [0-9A-Fa-f]
 oct         0{digit_8}*
 hex         0[Xx]{digit_16}+
-dec         [1-9]{digit}*
+dec         [+-]?[1-9]{digit}*
 
 float       ({dec}\.{digit}*)|(\.{digit}+)
 exp         ({dec}|{float})[Ee]{dec}
@@ -51,8 +51,7 @@ multi       \/\*[^*]*\*+([^*/][^*]*\*+)*\/
 annotation  {single}|{multi}
 leftNoStar	\/\*[^*]*
 leftStar    \/\*[^*]*\*+([^*/][^*]*\*+)*([^*/][^*]*)
-left		{leftNoStar}|{leftStar}
-right       \*\/
+leftAnno	{leftNoStar}|{leftStar}
 
 ID          {letter}({letter}|{digit})*
 SEMI        ;
@@ -76,6 +75,8 @@ RC          \}
 
 exphead		{dec}|{float}
 wrong_float	({exphead}[Ee]{float})|({exphead}[Ee][^ \n\t;]*)|([Ee]{float})
+wrong_hex	0[Xx][0-9A-Za-z]*
+wrong_oct	0[0-9A-Za-z]*
 
 %%
 
@@ -144,9 +145,23 @@ wrong_float	({exphead}[Ee]{float})|({exphead}[Ee][^ \n\t;]*)|([Ee]{float})
 {RC}        { debug("RC");      yylval.type_ast = newAst(TAG_RC, 0, yylineno);         return RC; }
 
 {annotation}   	{ debug("annotation"); }
-{wrong_float}	{ reportError("Illegal float number: "); }
-{left}      	{ reportError("Unterminated annotation: "); }
-{right}     	{ reportError("Unmatched end of annotation: "); }
+
+{wrong_float}	{ reportError("Illegal float number: "); 
+				  yylval.type_ast = newAst(TAG_ERROR, 0, yylineno);	
+				  return FLOAT;
+				}
+
+{wrong_hex}		{ reportError("Illegal hexademical number: ");
+				  yylval.type_ast = newAst(TAG_ERROR, 0, yylineno);
+				  return INT;
+				}
+
+{wrong_oct}		{ reportError("Illegal octal number: ");
+				  yylval.type_ast = newAst(TAG_ERROR, 0, yylineno);
+				  return INT;
+				}
+
+{leftAnno}      { reportError("Unterminated annotation: "); }
 .           	{ reportError("Mysterious characters: "); }
 
 %%

@@ -57,7 +57,7 @@ ExtDefList: ExtDef ExtDefList                   { $$ = newAst(TAG_EXT_DEF_LIST, 
 ExtDef: Specifier ExtDecList SEMI               { $$ = newAst(TAG_EXT_DEF, 3, $1, $2, $3); }
     | Specifier SEMI                            { $$ = newAst(TAG_EXT_DEF, 2, $1, $2); }
     | Specifier FunDec CompSt                   { $$ = newAst(TAG_EXT_DEF, 3, $1, $2, $3); }
-    | Specifier ExtDecList error                { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 8;  syntaxCorrect = false; }
+    | Specifier error SEMI                      { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 8;  syntaxCorrect = false; }
     | error SEMI                                { $$ = newAst(TAG_ERROR, 2, $1, $2); $$->error_type = 10;  syntaxCorrect = false; }
     ;
 
@@ -114,7 +114,7 @@ DefList: Def DefList                            { $$ = newAst(TAG_DEF_LIST, 2, $
     ;
 Def:  Specifier DecList SEMI                    { $$ = newAst(TAG_DEF, 3, $1, $2, $3); }
     | Specifier error SEMI                      { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 4; /*reportError($$, yylineno);*/ syntaxCorrect = false; }
-    | Specifier DecList error                   { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 2; /*reportError($$, yylineno);*/ syntaxCorrect = false; }
+    //| Specifier DecList error                   { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 2; /*reportError($$, yylineno);*/ syntaxCorrect = false; }
     ;
 DecList: Dec                                    { $$ = newAst(TAG_DEC_LIST, 1, $1); }
     | Dec COMMA DecList                         { $$ = newAst(TAG_DEC_LIST, 3, $1, $2, $3); }

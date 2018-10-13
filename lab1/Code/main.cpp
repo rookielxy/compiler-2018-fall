@@ -1,10 +1,9 @@
 #include "ast.h"
 
-
 extern FILE* yyin;
 extern int yylval;
 bool syntaxCorrect = true;
-#define YY_DEBUG6
+
 #ifdef YY_DEBUG
 extern int yydebug;
 #endif

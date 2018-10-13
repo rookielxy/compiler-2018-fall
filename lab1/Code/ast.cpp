@@ -17,7 +17,6 @@ string DICT[] = {
     "ID", "SEMI", "COMMA", "ASSIGNOP",
     "RELOP", "PLUS", "MINUS", "STAR",
     "DIV", "AND", "OR", "DOT", "NOT",
-    "MINUS",
     "LP", "RP", "LB", "RB", "LC", "RC"
 };
 
