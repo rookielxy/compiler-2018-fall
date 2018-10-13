@@ -4,6 +4,7 @@
 
 #include "syntax.tab.h"
 extern bool syntaxCorrect;
+bool inExp = false;
 // #define LEX_DEBUG
 
 void debug(string msg) {
@@ -36,7 +37,7 @@ digit_8     [0-7]
 digit_16    [0-9A-Fa-f]
 oct         0{digit_8}*
 hex         0[Xx]{digit_16}+
-dec         [+\-]?[1-9]{digit}*
+dec         [1-9]{digit}*
 
 float       ({dec}\.{digit}*)|(\.{digit}+)
 exp         ({dec}|{float})[Ee]{dec}
@@ -81,7 +82,7 @@ wrong_float	({exphead}[Ee]{float})|({exphead}[Ee][^ \n\t;]*)|([Ee]{float})
 {ws}        { /* take no action */ }
 
 {TYPE}      { debug("TYPE");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_TYPE, 0, yylineno);
+			  AstNode *leaf = yylval.type_ast = newAst(TAG_TYPE, 0, yylineno);
 			  leaf->str = string(yytext);
 			  return TYPE;
 			}
@@ -93,32 +94,32 @@ wrong_float	({exphead}[Ee]{float})|({exphead}[Ee][^ \n\t;]*)|([Ee]{float})
 {RETURN}    { debug("RETURN");  yylval.type_ast = newAst(TAG_RETURN, 0, yylineno);     return RETURN; }
 
 {oct}       { debug("OCT");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_INT, 0, yylineno);
+			  AstNode *leaf = yylval.type_ast = newAst(TAG_INT, 0, yylineno);
 			  sscanf(yytext, "%o", &leaf->ival);
 			  return INT;
 			}
 
 {dec}       { debug("DEC");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_INT, 0, yylineno);
+			  AstNode *leaf = yylval.type_ast = newAst(TAG_INT, 0, yylineno);
 			  sscanf(yytext, "%d", &leaf->ival);
 			  return INT;
 			}
 
 
 {hex}       { debug("HEX");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_INT, 0, yylineno);
+			  AstNode *leaf = yylval.type_ast = newAst(TAG_INT, 0, yylineno);
 			  sscanf(yytext, "%x", &leaf->ival);
 			  return INT;
 			}
 
 {FLOAT}     { debug("FLOAT");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_FLOAT, 0, yylineno);
+			  AstNode *leaf = yylval.type_ast = newAst(TAG_FLOAT, 0, yylineno);
 			  sscanf(yytext, "%f", &leaf->fval);
 			  return FLOAT; 
 			}
 
 {ID}        { debug("ID");
-			  struct AstNode *leaf = yylval.type_ast = newAst(TAG_ID, 0, yylineno);
+			  AstNode *leaf = yylval.type_ast = newAst(TAG_ID, 0, yylineno);
 			  leaf->str = string(yytext);
 			  return ID; 
 			}

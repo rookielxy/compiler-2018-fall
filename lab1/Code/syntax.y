@@ -11,7 +11,7 @@ extern bool syntaxCorrect;
 %}
 
 %union {
-    struct AstNode* type_ast;
+    AstNode* type_ast;
     double type_double;
 }
 

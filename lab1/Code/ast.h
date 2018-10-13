@@ -16,6 +16,7 @@ enum Tag {
     TAG_WHILE, TAG_RETURN, TAG_INT, TAG_FLOAT,
     TAG_ID, TAG_SEMI, TAG_COMMA, TAG_ASSIGNOP,
     TAG_RELOP, TAG_PLUS, TAG_MINUS, TAG_STAR,
+    TAG_NEG,
     TAG_DIV, TAG_AND, TAG_OR, TAG_DOT, TAG_NOT,
     TAG_LP, TAG_RP, TAG_LB, TAG_RB, TAG_LC, TAG_RC
 };
@@ -29,8 +30,8 @@ struct AstNode {
 		float fval;
 	};
     int error_type;
-    struct AstNode* first_child;
-    struct AstNode* first_sibling;
+    AstNode* first_child;
+    AstNode* first_sibling;
 
     AstNode() {
         first_child = nullptr;
@@ -39,10 +40,10 @@ struct AstNode {
 
 };
 
-extern struct AstNode *astRoot;
+extern AstNode *astRoot;
 extern string DICT[];
 
-struct AstNode *newAst(enum Tag, int, ...);
-void travesalAst(struct AstNode*, int);
-void reportError(struct AstNode*, int);
+AstNode *newAst(enum Tag, int, ...);
+void travesalAst(AstNode*, int);
+void reportError(AstNode*, int);
 #endif
