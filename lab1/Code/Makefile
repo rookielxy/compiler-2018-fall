@@ -19,6 +19,7 @@ YFO = $(YFC:.c=.o)
 
 parser: syntax $(filter-out $(LFO),$(OBJS))
 	$(CXX)  $(CPPFLAGS)  -o parser $(YFO) $(filter-out $(LFO),$(OBJS)) -ll -ly
+	cp parser ../parser
 
 syntax: lexical syntax-c
 	$(CXX)  $(CPPFLAGS)  -c $(YFC) -o $(YFO)
@@ -32,28 +33,14 @@ syntax-c: $(YFILE)
 -include $(patsubst %.o, %.d, $(OBJS))
 
 # 定义的一些伪目标
-.PHONY: clean scanner run debug
-scanner:
-	flex lexical.l
-	g++ main.c lex.yy.cc -lfl -o scanner
-
+.PHONY: clean run
 run:
-	./parser ../Test/test1.cmm
-	./parser ../Test/test2.cmm
-	./parser ../Test/test3.cmm
-	./parser ../Test/test4.cmm
-	./parser ../Test/test5.cmm
-	./parser ../Test/test6.cmm
-	./parser ../Test/test7.cmm
-	./parser ../Test/test8.cmm
-	./parser ../Test/test9.cmm
-	./parser ../Test/test13.cmm
-
-
-debug:
-	flex lexical.l
-	bison -d -v -t syntax.y
-	g++ syntax.tab.c ast.c main.c -ly -o parser -D YY_DEBUG
+	@for file in $(shell find ../Test -name "*.cmm");\
+	do\
+		echo "parsing $$file";\
+		./parser $$file;\
+		echo "";\
+	done
 
 clean:
 	rm -f parser lex.yy.c $(filter-out $(YFILE), $(shell find ./ -name "syntax.*"))
