@@ -4,8 +4,6 @@
 
 #include "syntax.tab.h"
 extern bool syntaxCorrect;
-bool inExp = false;
-// #define LEX_DEBUG
 
 void debug(string msg) {
 #ifdef LEX_DEBUG
@@ -161,7 +159,7 @@ wrong_oct	0[0-9A-Za-z]*
 				  return INT;
 				}
 
-{leftAnno}      { reportError("Unterminated annotation: "); }
+{leftAnno}      { reportError("Unterminated annotation:\n"); }
 .           	{ reportError("Mysterious characters: "); }
 
 %%
