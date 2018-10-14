@@ -35,10 +35,11 @@ digit_8     [0-7]
 digit_16    [0-9A-Fa-f]
 oct         0{digit_8}*
 hex         0[Xx]{digit_16}+
-dec         [+-]?[1-9]{digit}*
+dec         [1-9]{digit}*
 
-float       ({dec}\.{digit}*)|(\.{digit}+)
-exp         ({dec}|{float})[Ee]{dec}
+float       {dec}\.{digit}*|\.{digit}+
+base		[0-9]+\.[0-9]*|\.[0-9]+
+exp         {base}[Ee][+-]?[0-9]+
 
 FLOAT       {float}|{exp}
 
@@ -72,7 +73,7 @@ LC          \{
 RC          \}
 
 exphead		{dec}|{float}
-wrong_float	({exphead}[Ee]{float})|({exphead}[Ee][^ \n\t;]*)|([Ee]{float})
+wrong_float	{base}[Ee][^ \n\t;]*|[0-9]*[Ee][+-]?[0-9]+
 wrong_hex	0[Xx][0-9A-Za-z]*
 wrong_oct	0[0-9A-Za-z]*
 
