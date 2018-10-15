@@ -72,7 +72,6 @@ RB          \]
 LC          \{
 RC          \}
 
-exphead		{dec}|{float}
 wrong_float	{base}[Ee][^ \n\t;]*|[0-9]*[Ee][+-]?[0-9]+
 wrong_hex	0[Xx][0-9A-Za-z]*
 wrong_oct	0[0-9A-Za-z]*

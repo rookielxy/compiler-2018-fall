@@ -12,7 +12,6 @@ extern bool syntaxCorrect;
 
 %union {
     AstNode* type_ast;
-    double type_double;
 }
 
 /* Tokens */
