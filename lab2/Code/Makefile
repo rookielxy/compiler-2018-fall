@@ -2,14 +2,14 @@
 # ************ 遇到不明白的地方请google以及阅读手册 *************
 
 # 编译器设定和编译选项
-CC = g++
+CXX = g++
 FLEX = flex
 BISON = bison
-CFLAGS = -std=c++11
+CPPFLAGS = -w -std=c++11
 
-# 编译目标：src目录下的所有.c文件
-CFILES = $(shell find ./ -name "*.c")
-OBJS = $(CFILES:.c=.o)
+# 编译目标：src目录下的所有.cpp文件
+CFILES = $(shell find ./ -name "*.cpp")
+OBJS = $(CFILES:.cpp=.o)
 LFILE = $(shell find ./ -name "*.l")
 YFILE = $(shell find ./ -name "*.y")
 LFC = $(shell find ./ -name "*.l" | sed s/[^/]*\\.l/lex.yy.c/)
@@ -18,45 +18,32 @@ LFO = $(LFC:.c=.o)
 YFO = $(YFC:.c=.o)
 
 parser: syntax $(filter-out $(LFO),$(OBJS))
-	$(CC) -o parser $(filter-out $(LFO),$(OBJS)) -lfl -ly
+	$(CXX)  $(CPPFLAGS)  -o parser $(YFO) $(filter-out $(LFO),$(OBJS)) -ll -ly
+	cp parser ../parser
 
 syntax: lexical syntax-c
-	$(CC) -c $(YFC) -o $(YFO)
+	$(CXX)  $(CPPFLAGS)  -c $(YFC) -o $(YFO)
 
 lexical: $(LFILE)
 	$(FLEX) -o $(LFC) $(LFILE)
 
 syntax-c: $(YFILE)
-	$(BISON) -o $(YFC) -d -v $(YFILE)
+	$(BISON) -o $(YFC) -d -v -t $(YFILE)
 
 -include $(patsubst %.o, %.d, $(OBJS))
 
 # 定义的一些伪目标
-.PHONY: clean scanner run debug
-scanner:
-	flex lexical.l
-	gcc main.c lex.yy.c -lfl -o scanner
-
+.PHONY: clean run
 run:
-	./parser ../Test/test1.cmm
-	./parser ../Test/test2.cmm
-	./parser ../Test/test3.cmm
-	./parser ../Test/test4.cmm
-	./parser ../Test/test5.cmm
-	./parser ../Test/test6.cmm
-	./parser ../Test/test7.cmm
-	./parser ../Test/test8.cmm
-	./parser ../Test/test9.cmm
-	./parser ../Test/test13.cmm
-
-
-debug:
-	flex lexical.l
-	bison -d -v -t syntax.y
-	gcc syntax.tab.c ast.c main.c -lfl -ly -o parser -D YY_DEBUG
+	@for file in $(shell find ../Test -name "*.cmm");\
+	do\
+		echo "parsing $$file";\
+		./parser $$file;\
+		echo "";\
+	done
 
 clean:
-	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
+	rm -f parser lex.yy.c $(filter-out $(YFILE), $(shell find ./ -name "syntax.*"))
 	rm -f $(OBJS) $(OBJS:.o=.d)
 	rm -f $(LFC) $(YFC) $(YFC:.c=.h)
 	rm -f *~

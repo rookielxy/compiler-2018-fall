@@ -1,10 +1,9 @@
 #include "ast.h"
-#include "common.h"
-#include "symbol.h"
-#include "semantic.h"
 
 extern FILE* yyin;
 extern int yylval;
+bool syntaxCorrect = true;
+
 #ifdef YY_DEBUG
 extern int yydebug;
 #endif
@@ -12,14 +11,13 @@ extern int yydebug;
 extern int yylex();
 extern int yyparse();
 extern int yyrestart(FILE *);
-bool out;
+
 
 int main(int argc , char **argv) {
-    out = true;
-	if(argc <= 1)
+	if (argc <= 1)
 		return 1;
 	FILE *f = fopen(argv[1], "r");
-	if(f == NULL) {
+	if (f == nullptr) {
 		perror(argv[1]);
 		return 1;
 	}
@@ -29,7 +27,7 @@ int main(int argc , char **argv) {
 	yydebug = 1;
 #endif
 	yyparse();
-    if(out)
+    if (syntaxCorrect)
 	    travesalAst(astRoot, 0);
 	return 0;
 }

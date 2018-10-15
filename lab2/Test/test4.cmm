@@ -1,5 +1,10 @@
-float function()
+struct Complex
 {
-	float a = 12.34e.-4;
-	float b = .e;
+	float real, image;
+};
+
+int main()
+{
+	struct Complex x;
+	y.image = 3.5;
 }

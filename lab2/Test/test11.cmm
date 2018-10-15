@@ -1,8 +1,8 @@
-float funciton()
+int main() 
 {
-	float x4 = 1.e1;
-	float x1 = 4e;
-	float x2 = 1.e1.3;
-	float x3 = 12.34e.-4;
-	return x1 + x2;
+	int i = 0;
+	/*
+	this is a unterminated annotation
+	// line comment
+	int j = i;
 }

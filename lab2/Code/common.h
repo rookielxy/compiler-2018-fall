@@ -1,15 +1,18 @@
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#ifndef __COMMON__
+#define __COMMON__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdbool.h>
-#include <assert.h>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <cstdlib>
+#include <cstdarg>
+#include <cstdio>
 
-#define STRING_LENGTH 128
+// #define LEX_DEBUG
+// #define YY_DEBUG
 
-void error(char ch);
+using namespace std;
 
 #endif
