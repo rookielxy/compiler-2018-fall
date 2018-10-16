@@ -37,7 +37,7 @@ oct         0{digit_8}*
 hex         0[Xx]{digit_16}+
 dec         [1-9]{digit}*
 
-float       {dec}\.{digit}*|\.{digit}+
+float       [0-9]+([.][0-9]*)?|[.][0-9]+
 base		[0-9]+\.[0-9]*|\.[0-9]+
 exp         {base}[Ee][+-]?[0-9]+
 

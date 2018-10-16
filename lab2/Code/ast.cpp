@@ -1,7 +1,9 @@
-    #include "ast.h"
+#include "ast.h"
 
 extern bool syntaxCorrect;
+
 AstNode *astRoot = nullptr;
+SymbolTable AstNode::symTable;
 
 string DICT[] = {
     "Program", "ExtDefList", "ExtDef",
@@ -13,82 +15,123 @@ string DICT[] = {
     "Dec", "Exp", "Args",
 
     "TYPE", "STRUCT", "IF", "ELSE",
-    "WHILE", "RETURN", "INT", "FLOAT",
+    "WHILE", "RETURN", 
+    "INT", "INT", "INT", "FLOAT",
     "ID", "SEMI", "COMMA", "ASSIGNOP",
     "RELOP", "PLUS", "MINUS", "STAR",
     "DIV", "AND", "OR", "DOT", "NOT",
     "LP", "RP", "LB", "RB", "LC", "RC"
 };
 
-static void printError(string msg, char type, int lineno) {
-    printf("Error type \033[31m%c\033[0m at Line \033[31m%d\033[0m: %s\n", type, lineno, msg.c_str());
+void reportError(int type, string msg, int line_no) {
+    cout << "Error type " << type << " at Line "
+        << line_no << ": " << msg << endl;
 }
 
-void reportError(AstNode* root, int lineno) {
-    AstNode* child = root->first_child;
-    while (child != nullptr) {
-        if (child->error_type > 0)
-            return;
-        child = child->first_sibling;
-    }
-    switch(root->error_type) {
-        case 2: printError("Missing \";\"", 'B', lineno); break;
-        default: printError("Syntax error", 'B', lineno); printf("%d\n", root->error_type); break;
-    }
 
-}
-
-AstNode *newAst(enum Tag tag, int n, ...) {
-	va_list valist;
+AstNode::AstNode(enum Tag tag, int n, ...) {
+    va_list valist;
     va_start(valist, n);
 
-    auto root = new AstNode();
-    root->tag = tag;
-    root->error_type = 0;
-    root->first_child = nullptr;
-    root->first_sibling = nullptr;
+    this->tag = tag;
+    first_child = nullptr;
+    first_sibling = nullptr;
 
     if(n > 0) {
         AstNode *child = va_arg(valist, AstNode*);
-        root->line_no = child->line_no;
-        root->first_child = child;
+        line_no = child->line_no;
+        first_child = child;
         
-		for(int i = 1; i < n; ++i) {
+        for(int i = 1; i < n; ++i) {
             child->first_sibling = va_arg(valist, AstNode*);
             child = child->first_sibling;
-      		//printf("%s %s\n", root->name, child->name);
-		}
+        }
     } else {
-        root->line_no = va_arg(valist, int);
-		root->first_child = root->first_sibling = nullptr;
-	}
+        line_no = va_arg(valist, int);
+        first_child = first_sibling = nullptr;
+    }
 
-	va_end(valist);
-	return root;
+    va_end(valist);
 }
 
-void travesalAst(AstNode *root, int indent) {
-	if(root == nullptr)
-		return;
-	if(root->tag == TAG_EMPTY)
+void AstNode::extraInfo(enum Tag tag, char *yytext) {
+    switch (tag) {
+        case TAG_ID: case TAG_TYPE:
+            str = string(yytext);
+            break;
+        case TAG_HEX:
+            sscanf(yytext, "%x", &ival);
+            break;
+        case TAG_INT:
+            sscanf(yytext, "%d", &ival);
+            break;
+        case TAG_OCT:
+            sscanf(yytext, "%o", &ival);
+            break;
+        case TAG_FLOAT:
+            sscanf(yytext, "%f", &fval);
+            break;
+        default:
+            assert(false);
+    }
+}
+
+void AstNode::travesalAst(int indent) {
+	if(tag == TAG_EMPTY)
 		return;
     for(int i = 0; i < 2 * indent; ++i)
         cout << " ";
-    cout << DICT[root->tag];
-    if(root->first_child == nullptr) {
-        if (root->tag == TAG_ID || root->tag == TAG_TYPE)
-            cout << ": " << root->str;
-        else if (root->tag == TAG_INT)
-            cout << ": " << root->ival;
-        else if (root->tag == TAG_FLOAT)
-            cout << ": " << root->fval;
+    cout << DICT[tag];
+    if(first_child == nullptr) {
+        if (tag == TAG_ID || tag == TAG_TYPE)
+            cout << ": " << str;
+        else if (tag == TAG_INT)
+            cout << ": " << ival;
+        else if (tag == TAG_FLOAT)
+            cout << ": " << fval;
         cout << endl;
         return;
     }
-    cout << " (" << root->line_no << ")" << endl;;
-    AstNode *child = root->first_child;
+    cout << " (" << line_no << ")" << endl;;
+    AstNode *child = first_child;
     while(child != nullptr) {
-        travesalAst(child, indent + 1);
+        child->travesalAst(indent + 1);
         child = child->first_sibling;
     }
+}
+
+void AstNode::syntaxParse() {
+    AstNode *extDefList = first_child, *extDef = extDefList->first_child;
+    while (extDef->tag != TAG_EMPTY) {
+        extDef->parseExtDef();
+        extDefList = extDef->first_sibling;
+        extDef = extDefList->first_child;
+    }
+}
+
+void AstNode::parseExtDef() {
+    AstNode *specifier = first_child;
+    if (attr == FUNC_DEC) {                 // ExtDef -> Specifier FunDec SEMI
+        
+        return;
+    } else if (attr == FUNC_DEF) {          // ExtDef -> Specifier FunDec Compst
+                
+        return;
+    } else if (attr == VOID_DEC) {          // ExtDef -> Specifier SEMI
+        if (specifier->tag == TAG_TYPE)     // Declartion like int; float; makes no sense
+            return;
+        
+        symTable.defineStruct(*new Type(specifier));
+        return;
+    } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
+        auto type = new Type(specifier);
+        AstNode *extDecList = specifier->first_sibling;
+        
+        return;
+    }
+    assert(false);
+}
+
+vector<Symbol> AstNode::parseExtDecList(const Type &type) {
+
 }

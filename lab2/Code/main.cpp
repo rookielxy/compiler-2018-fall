@@ -28,6 +28,6 @@ int main(int argc , char **argv) {
 #endif
 	yyparse();
     if (syntaxCorrect)
-	    travesalAst(astRoot, 0);
+	    astRoot->travesalAst(0);
 	return 0;
 }

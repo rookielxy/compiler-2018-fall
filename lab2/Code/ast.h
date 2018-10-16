@@ -1,7 +1,8 @@
-#ifndef __AST_H__
-#define __AST_H__
+#ifndef __AST__
+#define __AST__
 
 #include "common.h"
+#include "symbolTable.h"
 
 enum Tag {
     TAG_PROGRAM, TAG_EXT_DEF_LIST, TAG_EXT_DEF,
@@ -13,37 +14,46 @@ enum Tag {
     TAG_DEC, TAG_EXP, TAG_ARGS,
 
     TAG_TYPE, TAG_STRUCT, TAG_IF, TAG_ELSE,
-    TAG_WHILE, TAG_RETURN, TAG_INT, TAG_FLOAT,
+    TAG_WHILE, TAG_RETURN, 
+    TAG_INT, TAG_OCT, TAG_HEX, TAG_FLOAT,
     TAG_ID, TAG_SEMI, TAG_COMMA, TAG_ASSIGNOP,
     TAG_RELOP, TAG_PLUS, TAG_MINUS, TAG_STAR,
     TAG_DIV, TAG_AND, TAG_OR, TAG_DOT, TAG_NOT,
     TAG_LP, TAG_RP, TAG_LB, TAG_RB, TAG_LC, TAG_RC,
-
 };
 
-struct AstNode {
+enum Attr {
+    DEC_LIST, VOID_DEC, FUNC_DEF, FUNC_DEC,
+    STRUCT_DEF, STRUCT_DEC
+};
+
+class AstNode {
+    friend class Type;
+
+    static SymbolTable symTable;
+
     int line_no;
     enum Tag tag;
-	union {
-		string str;
-		int ival;
-		float fval;
-	};
-    int error_type;
     AstNode* first_child;
     AstNode* first_sibling;
-
-    AstNode() {
-        first_child = nullptr;
-        first_sibling = nullptr;
-    }
-
+    union {
+        string str;
+        int ival;
+        float fval;
+    };
+public:
+    enum Attr attr;
+    AstNode(enum Tag, int, ...);
+    void extraInfo(enum Tag, char *yytext);
+    void travesalAst(int);
+    void syntaxParse();
+    void parseExtDef();
+    vector<Symbol> parseExtDecList(const Type &type);
 };
 
-extern AstNode *astRoot;
 extern string DICT[];
+extern AstNode *astRoot;
 
-AstNode *newAst(enum Tag, int, ...);
-void travesalAst(AstNode*, int);
-void reportError(AstNode*, int);
+void reportError(int type, string msg, int line_no);
+
 #endif
