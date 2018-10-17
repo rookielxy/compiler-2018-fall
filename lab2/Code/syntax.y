@@ -81,8 +81,8 @@ Tag: ID                                         { $$ = new AstNode(TAG_TAG, 1, $
 VarDec: ID                                      { $$ = new AstNode(TAG_VAR_DEC, 1, $1); }
     | VarDec LB INT RB                          { $$ = new AstNode(TAG_VAR_DEC, 4, $1, $2, $3, $4); }
     ;
-FunDec: ID LP VarList RP                        { $$ = new AstNode(TAG_FUN_DEC, 4, $1, $2, $3, $4); }
-    | ID LP RP                                  { $$ = new AstNode(TAG_FUN_DEC, 3, $1, $2, $3); }
+FunDec: ID LP VarList RP                        { $$ = new AstNode(TAG_FUN_DEC, 4, $1, $2, $3, $4); $$->attr = FUNC_VAR; }
+    | ID LP RP                                  { $$ = new AstNode(TAG_FUN_DEC, 3, $1, $2, $3); $$->attr = FUNC_EMPTY; }
     ;
 VarList: ParamDec COMMA VarList                 { $$ = new AstNode(TAG_VAR_LIST, 3, $1, $2, $3); }
     | ParamDec                                  { $$ = new AstNode(TAG_VAR_LIST, 1, $1); }

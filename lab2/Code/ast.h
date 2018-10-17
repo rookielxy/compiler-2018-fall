@@ -24,15 +24,14 @@ enum Tag {
 
 enum Attr {
     DEC_LIST, VOID_DEC, FUNC_DEF, FUNC_DEC,
-    STRUCT_DEF, STRUCT_DEC
+    STRUCT_DEF, STRUCT_DEC,
+    FUNC_VAR, FUNC_EMPTY,
 };
 
 class AstNode {
-    friend class Type;
-
     static SymbolTable symTable;
 
-    int line_no;
+public:
     enum Tag tag;
     AstNode* first_child;
     AstNode* first_sibling;
@@ -41,19 +40,19 @@ class AstNode {
         int ival;
         float fval;
     };
-public:
+    int line_no;
     enum Attr attr;
+    
     AstNode(enum Tag, int, ...);
     void extraInfo(enum Tag, char *yytext);
     void travesalAst(int);
     void syntaxParse();
     void parseExtDef();
-    vector<Symbol> parseExtDecList(const Type &type);
+    void parseExtDecList(const Type &type);
+    vector<Field> parseVarList();
 };
 
 extern string DICT[];
 extern AstNode *astRoot;
-
-void reportError(int type, string msg, int line_no);
 
 #endif

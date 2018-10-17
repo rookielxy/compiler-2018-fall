@@ -20,9 +20,11 @@ class Type {
             vector<Field> fields;
         } structure;
     };
+    int line_no;
 public:
     Type();
-    Type(AstNode *specifier);
+    explicit Type(AstNode *specifier);
+    Type(AstNode *varDec, const Type &type);
     Type(const Type& type);
     ~Type();
     Type& operator=(const Type& type);
@@ -32,6 +34,7 @@ public:
     bool operator==(const Type &type);
     bool isBasic();
     string getStructName() const;
+    int getLineNo() const;
 };
 
 class Field {
@@ -39,6 +42,7 @@ class Field {
     Type type;
     friend class Type;
 public:
+    explicit Field(AstNode *param);
     Field& operator=(const Field &field);
 };
 

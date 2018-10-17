@@ -23,12 +23,6 @@ string DICT[] = {
     "LP", "RP", "LB", "RB", "LC", "RC"
 };
 
-void reportError(int type, string msg, int line_no) {
-    cout << "Error type " << type << " at Line "
-        << line_no << ": " << msg << endl;
-}
-
-
 AstNode::AstNode(enum Tag tag, int n, ...) {
     va_list valist;
     va_start(valist, n);
@@ -112,26 +106,39 @@ void AstNode::syntaxParse() {
 void AstNode::parseExtDef() {
     AstNode *specifier = first_child;
     if (attr == FUNC_DEC) {                 // ExtDef -> Specifier FunDec SEMI
-        
+        auto func = Function(specifier->first_sibling, Type(specifier), false);
+
         return;
     } else if (attr == FUNC_DEF) {          // ExtDef -> Specifier FunDec Compst
-                
+        auto func = Function(specifier->first_sibling, Type(specifier), true);
         return;
     } else if (attr == VOID_DEC) {          // ExtDef -> Specifier SEMI
-        if (specifier->tag == TAG_TYPE)     // Declartion like int; float; makes no sense
-            return;
-        
-        symTable.defineStruct(*new Type(specifier));
+        if (specifier->tag == TAG_STRUCT_SPECIFIER)         // structure declaration
+            symTable.defineStruct(Type(specifier));
         return;
     } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
-        auto type = new Type(specifier);
         AstNode *extDecList = specifier->first_sibling;
-        
+        extDecList->parseExtDecList(Type(specifier));
         return;
     }
     assert(false);
 }
 
-vector<Symbol> AstNode::parseExtDecList(const Type &type) {
+void AstNode::parseExtDecList(const Type &type) {
+    AstNode *extDecList = this, *varDec = first_child;
+    while (varDec->first_sibling != nullptr) {
+        symTable.defineSymbol(Symbol(varDec, type));
+        extDecList = varDec->first_sibling->first_sibling;
+        varDec = extDecList->first_child;
+    }
+}
 
+vector<Field> AstNode::parseVarList() {
+    AstNode *param = first_child;
+    vector<Field> result;
+    while (param->first_sibling != nullptr) {
+        result.emplace_back(Field(param));
+        param = param->first_sibling->first_child;
+    }
+    return result;
 }

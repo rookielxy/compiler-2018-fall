@@ -8,9 +8,11 @@
 class Symbol {
     string name;
     Type type;
+    int line_no;
 public:
     Symbol(AstNode *varDec, const Type &type);
     string getName() const;
+    int getLineNo() const;
 };
 
 #endif

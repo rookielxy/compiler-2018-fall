@@ -8,7 +8,9 @@ class Function {
 	string name;
     Type ret;
     vector<Field> args;
+    bool def;
 public:
+	Function(AstNode *funDec, const Type &type, bool def);
     string getName() const;
 };
 

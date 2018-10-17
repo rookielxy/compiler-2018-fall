@@ -28,12 +28,29 @@ Type::Type(AstNode *specifier) {
     		structure.name = structTag->first_child->str;
         } else if (structSpecifier->attr == STRUCT_DEC) {
             structure.name = structTag->first_child->str;
-        } else 
+        } else {
             assert(false);
+        }
+    }
+    line_no = specifier->line_no;
+}
+
+Type::Type(AstNode *varDec, const Type &type) {
+    kind = ARRAY;
+    line_no = varDec->line_no;
+    assert(varDec->tag == TAG_VAR_DEC or varDec->tag == TAG_ID);
+    if (varDec->tag == TAG_VAR_DEC) {
+        varDec = varDec->first_child;
+        AstNode *size = varDec->first_sibling->first_sibling;
+        array.size = size->ival;
+        array.elem = new Type(varDec, type);
+    } else {
+        *this = type;
     }
 }
 
 Type::Type(const Type &type) {
+    line_no = type.line_no;
     if (type.kind == BASIC) {
         kind = BASIC;
         basic = type.basic;
@@ -87,7 +104,19 @@ bool Type::equalStructure(const Type &type) {
 }
 
 bool Type::equalArray(const Type &type) {
-	return *array.elem == *type.array.elem;
+    int d1 = 0, d2 = 0;
+    Type *t1 = array.elem, *t2 = type.array.elem;
+    while(t1->kind == ARRAY) {
+        ++d1;
+        t1 = t1->array.elem;
+    }
+
+    while(t2->kind == ARRAY) {
+        ++d2;
+        t2 = t2->array.elem;
+    }
+
+	return (d1 == d2) and (*t1 == *t2);
 }
 
 bool Type::operator==(const Type &type) {
@@ -106,6 +135,20 @@ bool Type::isBasic() {
 
 string Type::getStructName() const {
 	return structure.name;
+}
+
+int Type::getLineNo() const {
+    return line_no;
+}
+
+Field::Field(AstNode *param) {
+    AstNode *specifier = param->first_child, *varDec = specifier->first_sibling,
+            *id = varDec;
+    while (id->tag == TAG_VAR_DEC)
+        id = id->first_child;
+    name = id->str;
+    type = Type(specifier);
+
 }
 
 Field& Field::operator=(const Field &field) {
