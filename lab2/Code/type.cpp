@@ -10,28 +10,30 @@ Type::Type(AstNode *specifier) {
     AstNode *child = specifier->first_child;
     assert(child->tag == TAG_STRUCT_SPECIFIER or child->tag == TAG_TYPE);
 
-    if (child->tag == TAG_TYPE) {
-        // Specifier -> Type 
-        kind = BASIC;
+    if (child->tag == TAG_TYPE) {                              
+        kind = BASIC;               // Specifier -> Type 
         if (child->str == "int")
             basic = TYPE_INT;
         else if (child->str == "float")
             basic = TYPE_FLOAT;
         else
             assert(false);  
-    } else {
-        // Specifier -> StructSpecifier
-        kind = STRUCTURE;
+    } else {                       
+        kind = STRUCTURE;           // Specifier -> StructSpecifier
         AstNode *structSpecifier = child,
-                *structTag = child->first_sibling;
-        if (structSpecifier->attr == STRUCT_DEF and structTag->first_child->tag == TAG_ID) {
+                *structTag = structSpecifier->first_sibling,
+                *defList = structSpecifier;
+        assert(structSpecifier->attr == STRUCT_DEF or structSpecifier->attr )
+        if (structSpecifier->attr == STRUCT_DEF) {
     		structure.name = structTag->first_child->str;
+
+            // TODO: parse DefList
         } else if (structSpecifier->attr == STRUCT_DEC) {
             structure.name = structTag->first_child->str;
-        } else {
-            assert(false);
+            // TODO: parse DefList
         }
     }
+
     line_no = specifier->line_no;
 }
 
@@ -128,16 +130,3 @@ bool Type::operator==(const Type &type) {
 		return equalStructure(type);
 	return false;
 }
-
-bool Type::isBasic() {
-	return kind == BASIC;
-}
-
-string Type::getStructName() const {
-	return structure.name;
-}
-
-int Type::getLineNo() const {
-    return line_no;
-}
-

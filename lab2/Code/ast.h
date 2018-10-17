@@ -26,6 +26,7 @@ enum Attr {
     DEC_LIST, VOID_DEC, FUNC_DEF, FUNC_DEC,
     STRUCT_DEF, STRUCT_DEC,
     FUNC_VAR, FUNC_EMPTY,
+    EMPTY_DEC, ASSIGN_DEC
 };
 
 class AstNode {
@@ -49,7 +50,10 @@ public:
     void syntaxParse();
     void parseExtDef();
     void parseExtDecList(const Type &type);
+    vector<Symbol> parseDefList(bool assign);
     vector<Symbol> parseVarList();
+    void parseDecList(vector<Symbol> &symbol, 
+                        const Type &type, bool assign);
 };
 
 extern string DICT[];

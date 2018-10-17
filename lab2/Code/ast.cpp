@@ -133,6 +133,53 @@ void AstNode::parseExtDecList(const Type &type) {
     }
 }
 
+vector<Symbol> AstNode::parseDefList(bool assign) {
+    vector<Symbol> result;
+    AstNode *defList = this, *def = first_child;
+    while (def->tag != TAG_EMPTY) {
+        AstNode *specifier = def->first_child, 
+                *decList = specifier->first_sibling;
+        decList->parseDecList(result, Type(specifier), assign);
+        defList = def->first_sibling;
+        def = defList->first_child;
+    }
+}
+
+void AstNode::parseDecList(vector<Symbol> &symbols, 
+                            const Type &type, bool assign) {
+    AstNode *decList = this, *dec = first_child;
+    while (dec->first_sibling != nullptr) {
+        assert(dec->attr == EMPTY_DEC or dec->attr == ASSIGN_DEC);
+        AstNode *varDec = dec->first_child;
+        Symbol symbol = Symbol(varDec, type);
+
+        bool conflict = false;
+        for (auto ele : symbols) {
+            if (ele.getName() == symbol.getName()) {
+                conflict = true;
+                break;
+            }
+        }
+
+        if (not conflict)
+            symbols.emplace_back(symbol);
+        else {
+            string msg = "Redefined field";
+            msg += "\"" + symbol.getName() + "\".";
+            reportError(15, msg, symbol.getLineNo());
+        }
+
+        if (dec->attr == ASSIGN_DEC and not assign) {
+            string msg = "Initialize field ";
+            msg += "\"" + symbol.getName() + "\" in definition.";
+            reportError(15, msg, symbol.getLineNo());
+        }
+
+        decList = dec->first_sibling->first_sibling;
+        dec = decList->first_child;
+    }
+}
+
 vector<Symbol> AstNode::parseVarList() {
     AstNode *param = first_child;
     vector<Symbol> result;

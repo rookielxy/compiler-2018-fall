@@ -29,7 +29,8 @@ void SymbolTable::leaveScope() {
 }
 
 void SymbolTable::defineStruct(const Type &type) {
-	if (findStruct(type.getStructName()) != nullptr) {
+	if (findStruct(type.getStructName()) != nullptr or
+		findLocalSymbol(type.getStructName()) != nullptr) {
         string msg("Duplicate name");                  	// defined Structure's name conflict
         msg += "\"" + type.getStructName() + "\".";    	// with previously defined variable
         reportError(16, msg, type.getLineNo());        	// or structure
@@ -51,7 +52,7 @@ void SymbolTable::defineSymbol(const Symbol &symbol) {
 
 void SymbolTable::defineFunc(const Function &func) {
 	if (findStruct(func.getName()) != nullptr) {
-		
+
 	}
 	decFunc.emplace(func.getName(), func);
 }

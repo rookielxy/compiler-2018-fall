@@ -114,13 +114,12 @@ DefList: Def DefList                            { $$ = new AstNode(TAG_DEF_LIST,
     ;
 Def:  Specifier DecList SEMI                    { $$ = new AstNode(TAG_DEF, 3, $1, $2, $3); }
     | Specifier error SEMI                      { $$ = new AstNode(TAG_ERROR, 3, $1, $2, $3); syntaxCorrect = false; }
-    //| Specifier DecList error                   { $$ = new AstNode(TAG_ERROR, 3, $1, $2, $3); syntaxCorrect = false; }
     ;
 DecList: Dec                                    { $$ = new AstNode(TAG_DEC_LIST, 1, $1); }
     | Dec COMMA DecList                         { $$ = new AstNode(TAG_DEC_LIST, 3, $1, $2, $3); }
     ;
-Dec:  VarDec                                    { $$ = new AstNode(TAG_DEC, 1, $1); }
-    | VarDec ASSIGNOP Exp                       { $$ = new AstNode(TAG_DEC, 3, $1, $2, $3); }
+Dec:  VarDec                                    { $$ = new AstNode(TAG_DEC, 1, $1); $$->attr = EMPTY_DEC; }
+    | VarDec ASSIGNOP Exp                       { $$ = new AstNode(TAG_DEC, 3, $1, $2, $3); $$->attr = ASSIGN_DEC; }
     ;
 
 /* Expressions */

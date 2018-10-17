@@ -7,7 +7,6 @@ class Symbol;
 class AstNode;
 
 class Type {
-protected:
     enum {BASIC, ARRAY, STRUCTURE} kind;
     enum BASIC {TYPE_INT, TYPE_FLOAT};
     union {
@@ -30,12 +29,15 @@ public:
     ~Type();
     Type& operator=(const Type& type);
 
+    bool isBasic() { return kind == BASIC; };
+    string getStructName() const { return structure.name; };
+    int getLineNo() const { return line_no; };
+
     bool equalArray(const Type &type);
     bool equalStructure(const Type &type);
     bool operator==(const Type &type);
-    bool isBasic();
-    string getStructName() const;
-    int getLineNo() const;
+
+    void fieldConflict();
 };
 
 #endif
