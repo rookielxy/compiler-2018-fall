@@ -7,7 +7,7 @@
 class Function {
 	string name;
     Type ret;
-    vector<Field> args;
+    vector<Symbol> args;
     bool def;
 public:
 	Function(AstNode *funDec, const Type &type, bool def);

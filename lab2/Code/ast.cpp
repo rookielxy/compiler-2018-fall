@@ -133,11 +133,11 @@ void AstNode::parseExtDecList(const Type &type) {
     }
 }
 
-vector<Field> AstNode::parseVarList() {
+vector<Symbol> AstNode::parseVarList() {
     AstNode *param = first_child;
-    vector<Field> result;
+    vector<Symbol> result;
     while (param->first_sibling != nullptr) {
-        result.emplace_back(Field(param));
+        result.emplace_back(Symbol(param));
         param = param->first_sibling->first_child;
     }
     return result;

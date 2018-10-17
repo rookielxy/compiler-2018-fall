@@ -1,6 +1,16 @@
 #include "symbol.h"
 #include "ast.h"
 
+Symbol::Symbol(AstNode *param) {
+    AstNode *specifier = param->first_child, *varDec = specifier->first_sibling,
+            *id = varDec;
+    while (id->tag == TAG_VAR_DEC)
+        id = id->first_child;
+    name = id->str;
+    type = Type(specifier);
+}
+
+
 Symbol::Symbol(AstNode *varDec, const Type &type) {
 	AstNode *child = varDec->first_child;
 	assert(child->tag == TAG_ID or child->tag == TAG_VAR_DEC);

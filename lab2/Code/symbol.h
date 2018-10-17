@@ -6,10 +6,13 @@
 #include "common.h"
 
 class Symbol {
+	friend class Type;
+
     string name;
     Type type;
     int line_no;
 public:
+	explicit Symbol(AstNode *param);
     Symbol(AstNode *varDec, const Type &type);
     string getName() const;
     int getLineNo() const;

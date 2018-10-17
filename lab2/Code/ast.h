@@ -49,7 +49,7 @@ public:
     void syntaxParse();
     void parseExtDef();
     void parseExtDecList(const Type &type);
-    vector<Field> parseVarList();
+    vector<Symbol> parseVarList();
 };
 
 extern string DICT[];

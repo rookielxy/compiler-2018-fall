@@ -3,10 +3,11 @@
 
 #include "common.h"
 
-class Field;
+class Symbol;
 class AstNode;
 
 class Type {
+protected:
     enum {BASIC, ARRAY, STRUCTURE} kind;
     enum BASIC {TYPE_INT, TYPE_FLOAT};
     union {
@@ -17,7 +18,7 @@ class Type {
         } array;
         struct {
             string name;
-            vector<Field> fields;
+            vector<Symbol> fields;
         } structure;
     };
     int line_no;
@@ -36,15 +37,5 @@ public:
     string getStructName() const;
     int getLineNo() const;
 };
-
-class Field {
-    string name;
-    Type type;
-    friend class Type;
-public:
-    explicit Field(AstNode *param);
-    Field& operator=(const Field &field);
-};
-
 
 #endif

@@ -141,18 +141,3 @@ int Type::getLineNo() const {
     return line_no;
 }
 
-Field::Field(AstNode *param) {
-    AstNode *specifier = param->first_child, *varDec = specifier->first_sibling,
-            *id = varDec;
-    while (id->tag == TAG_VAR_DEC)
-        id = id->first_child;
-    name = id->str;
-    type = Type(specifier);
-
-}
-
-Field& Field::operator=(const Field &field) {
-    name = field.name;
-    type = field.type;
-    return *this;
-}
