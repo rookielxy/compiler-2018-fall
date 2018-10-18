@@ -1,8 +1,0 @@
-int main() 
-{
-	int i = 0;
-	/*
-	this is a unterminated annotation
-	// line comment
-	int j = i;
-}

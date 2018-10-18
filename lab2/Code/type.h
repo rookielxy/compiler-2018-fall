@@ -9,7 +9,7 @@ class AstNode;
 class Type {
     enum {BASIC, ARRAY, STRUCTURE} kind;
     enum BASIC {TYPE_INT, TYPE_FLOAT};
-    union {
+    struct {
         enum BASIC basic;
         struct {
             Type *elem;
@@ -19,7 +19,7 @@ class Type {
             string name;
             vector<Symbol> fields;
         } structure;
-    };
+    } info;
     int line_no;
 public:
     Type();
@@ -30,7 +30,7 @@ public:
     Type& operator=(const Type& type);
 
     bool isBasic() { return kind == BASIC; };
-    string getStructName() const { return structure.name; };
+    string getStructName() const { return info.structure.name; };
     int getLineNo() const { return line_no; };
 
     bool equalArray(const Type &type);

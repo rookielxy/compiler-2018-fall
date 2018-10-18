@@ -27,7 +27,8 @@ int main(int argc , char **argv) {
 	yydebug = 1;
 #endif
 	yyparse();
-    if (syntaxCorrect)
-	    astRoot->travesalAst(0);
+/*	if (syntaxCorrect)
+		astRoot->travesalAst(0);*/
+	astRoot->syntaxParse();
 	return 0;
 }

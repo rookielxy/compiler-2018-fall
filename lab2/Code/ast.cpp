@@ -109,16 +109,15 @@ void AstNode::parseExtDef() {
     AstNode *specifier = first_child;
     auto type = specifier->parseSpecifier();
     if (attr == FUNC_DEC) {                 // ExtDef -> Specifier FunDec SEMI
-        auto func = Function(specifier->first_sibling, type, false);
+        //auto func = Function(specifier->first_sibling, type, false);
 
         return;
     } else if (attr == FUNC_DEF) {          // ExtDef -> Specifier FunDec Compst
-        auto func = Function(specifier->first_sibling, type, true);
+        //auto func = Function(specifier->first_sibling, type, true);
 
         return;
     } else if (attr == VOID_DEC) {          // ExtDef -> Specifier SEMI
-                                            // do nothing
-        return;
+        return;                             // do nothing
     } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
         AstNode *extDecList = specifier->first_sibling;
         extDecList->parseExtDecList(type);
@@ -144,8 +143,8 @@ Type AstNode::parseSpecifier() {
         }
     } else {
         auto type = Type(this);
-        if (type->kind == STRUCTURE and
-            type->getName() != "anonymous")
+        if (not type.isBasic() and
+            type.getStructName() != "anonymous")
             symTable.defineStruct(type);
         return type;
     }
@@ -165,7 +164,7 @@ vector<Symbol> AstNode::parseDefList(bool assign) {
     assert(tag == TAG_DEF_LIST);
     vector<Symbol> result;
     AstNode *defList = this, *def = first_child;
-    while (def->tag != TAG_EMPTY) {
+    while (defList->tag != TAG_EMPTY) {
         AstNode *specifier = def->first_child, 
                 *decList = specifier->first_sibling;
         decList->parseDecList(result, Type(specifier), assign);

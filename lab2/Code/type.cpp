@@ -13,9 +13,9 @@ Type::Type(AstNode *specifier) {
     if (child->tag == TAG_TYPE) {                              
         kind = BASIC;               // Specifier -> Type 
         if (child->str == "int")
-            basic = TYPE_INT;
+            info.basic = TYPE_INT;
         else if (child->str == "float")
-            basic = TYPE_FLOAT;
+            info.basic = TYPE_FLOAT;
         else
             assert(false);  
     } else {                       
@@ -24,12 +24,12 @@ Type::Type(AstNode *specifier) {
                 *defList = structTag->first_sibling->first_sibling;
         assert(child->attr == STRUCT_DEF or child->attr == STRUCT_DEC);
         if (child->attr == STRUCT_DEF) {
-    		if (structTag->first_child->tag == TAG_ID)
-                structure.name = structTag->first_child->str;
-            else
-                structure.name = "anonymous";           // anonymous structure
+    		if (structTag->first_child->tag == TAG_ID) {
+                info.structure.name = "Position";//structTag->first_child->str;
+            } else
+                info.structure.name = "anonymous";           // anonymous structure
 
-            structure.fields = defList->parseDefList(false);      // assign not permitted in fields definition
+            info.structure.fields = defList->parseDefList(false);      // assign not permitted in fields definition
         } else {
             assert(false);                              // only declaration cannot 
                                                         // construct a type
@@ -46,8 +46,8 @@ Type::Type(AstNode *varDec, const Type &type) {
     if (varDec->tag == TAG_VAR_DEC) {
         varDec = varDec->first_child;
         AstNode *size = varDec->first_sibling->first_sibling;
-        array.size = size->ival;
-        array.elem = new Type(varDec, type);
+        info.array.size = size->ival;
+        info.array.elem = new Type(varDec, type);
     } else {
         *this = type;
     }
@@ -57,15 +57,15 @@ Type::Type(const Type &type) {
     line_no = type.line_no;
     if (type.kind == BASIC) {
         kind = BASIC;
-        basic = type.basic;
+        info.basic = type.info.basic;
     } else if (type.kind == ARRAY){
         kind = ARRAY;
-        array.size = type.array.size;
-        array.elem = new Type(*type.array.elem);
+        info.array.size = type.info.array.size;
+        info.array.elem = new Type(*type.info.array.elem);
     } else {
         kind = STRUCTURE;
-        structure.name = type.structure.name;
-        structure.fields = type.structure.fields;
+        info.structure.name = type.info.structure.name;
+        info.structure.fields = type.info.structure.fields;
     }
 }
 
@@ -73,10 +73,10 @@ Type::~Type() {
 	if (kind == BASIC) {
         // do nothing
     } else if (kind == ARRAY) {
-        (*array.elem).~Type();
+        (*info.array.elem).~Type();
     } else {
-        structure.name.~string();
-        structure.fields.~vector();
+        info.structure.name.~string();
+        info.structure.fields.~vector();
     }
 }
 
