@@ -8,29 +8,24 @@ class AstNode;
 
 class Type {
     enum {BASIC, ARRAY, STRUCTURE} kind;
-    enum BASIC {TYPE_INT, TYPE_FLOAT};
+    enum {TYPE_INT, TYPE_FLOAT} basic;
     struct {
-        enum BASIC basic;
-        struct {
-            Type *elem;
-            size_t size;
-        } array;
-        struct {
-            string name;
-            vector<Symbol> fields;
-        } structure;
-    } info;
+        Type *elem;
+        size_t size;
+    } array;
+    struct {
+        string name;
+        vector<Symbol> fields;
+    } structure;
     int line_no;
 public:
-    Type();
+    Type() = default;
     explicit Type(AstNode *specifier);
     Type(AstNode *varDec, const Type &type);
-    Type(const Type& type);
     ~Type();
-    Type& operator=(const Type& type);
 
     bool isBasic() { return kind == BASIC; };
-    string getStructName() const { return info.structure.name; };
+    string getStructName() const { return structure.name; };
     int getLineNo() const { return line_no; };
 
     bool equalArray(const Type &type);

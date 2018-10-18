@@ -35,7 +35,7 @@ void SymbolTable::defineStruct(const Type &type) {
         msg += "\"" + type.getStructName() + "\".";    	// with previously defined variable
         reportError(16, msg, type.getLineNo());        	// or structure
 	} else {
-    	decTypes.emplace(type.getStructName(), type);
+    	decTypes.insert(pair<string, Type>(type.getStructName(), type));
 	}
 }
 

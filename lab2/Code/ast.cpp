@@ -97,7 +97,7 @@ void AstNode::travesalAst(int indent) {
 void AstNode::syntaxParse() {
     assert(tag == TAG_PROGRAM);
     AstNode *extDefList = first_child, *extDef = extDefList->first_child;
-    while (extDef->tag != TAG_EMPTY) {
+    while (extDefList->tag != TAG_EMPTY) {
         extDef->parseExtDef();
         extDefList = extDef->first_sibling;
         extDef = extDefList->first_child;
@@ -120,13 +120,13 @@ void AstNode::parseExtDef() {
         return;                             // do nothing
     } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
         AstNode *extDecList = specifier->first_sibling;
-        extDecList->parseExtDecList(type);
+        extDecList->parseExtDecList(*type);
         return;
     }
     assert(false);
 }
 
-Type AstNode::parseSpecifier() {
+Type *AstNode::parseSpecifier() {
     assert(tag == TAG_SPECIFIER);
     AstNode *child = first_child;
     if (tag == TAG_STRUCT_SPECIFIER and child->attr == STRUCT_DEC) {
@@ -137,15 +137,15 @@ Type AstNode::parseSpecifier() {
             string msg = "Undefined structure ";        // Error: use undefined structure to
             msg += "\"" + name + "\".";                 // define variable
             reportError(17, msg, line_no);              // return empty Type;
-            return Type();
+            return new Type();
         } else {
-            return *ptr;
+            return ptr;
         }
     } else {
-        auto type = Type(this);
-        if (not type.isBasic() and
-            type.getStructName() != "anonymous")
-            symTable.defineStruct(type);
+        auto type = new Type(this);
+        if (not type->isBasic() and
+            type->getStructName() != "anonymous")
+            symTable.defineStruct(*type);
         return type;
     }
 }
@@ -177,10 +177,10 @@ void AstNode::parseDecList(vector<Symbol> &symbols,
                             const Type &type, bool assign) {
     assert(tag == TAG_DEC_LIST);
     AstNode *decList = this, *dec = first_child;
-    while (dec->first_sibling != nullptr) {
+    while (true) {
         assert(dec->attr == EMPTY_DEC or dec->attr == ASSIGN_DEC);
         AstNode *varDec = dec->first_child;
-        Symbol symbol = Symbol(varDec, type);
+        auto symbol = Symbol(varDec, type);
 
         bool conflict = false;
         for (auto ele : symbols) {
@@ -204,6 +204,8 @@ void AstNode::parseDecList(vector<Symbol> &symbols,
             reportError(15, msg, symbol.getLineNo());
         }
 
+        if (dec->first_sibling == nullptr)
+            break;
         decList = dec->first_sibling->first_sibling;
         dec = decList->first_child;
     }

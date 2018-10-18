@@ -1,11 +1,6 @@
 #include "type.h"
 #include "ast.h"
 
-Type::Type() {
-	// temporary
-	// to supress the warning
-}
-
 Type::Type(AstNode *specifier) {
     AstNode *child = specifier->first_child;
     assert(child->tag == TAG_STRUCT_SPECIFIER or child->tag == TAG_TYPE);
@@ -13,9 +8,9 @@ Type::Type(AstNode *specifier) {
     if (child->tag == TAG_TYPE) {                              
         kind = BASIC;               // Specifier -> Type 
         if (child->str == "int")
-            info.basic = TYPE_INT;
+            basic = TYPE_INT;
         else if (child->str == "float")
-            info.basic = TYPE_FLOAT;
+            basic = TYPE_FLOAT;
         else
             assert(false);  
     } else {                       
@@ -25,11 +20,11 @@ Type::Type(AstNode *specifier) {
         assert(child->attr == STRUCT_DEF or child->attr == STRUCT_DEC);
         if (child->attr == STRUCT_DEF) {
     		if (structTag->first_child->tag == TAG_ID) {
-                info.structure.name = "Position";//structTag->first_child->str;
+                structure.name = "Position";            //structTag->first_child->str;
             } else
-                info.structure.name = "anonymous";           // anonymous structure
+                structure.name = "anonymous";           // anonymous structure
 
-            info.structure.fields = defList->parseDefList(false);      // assign not permitted in fields definition
+            structure.fields = defList->parseDefList(false);      // assign not permitted in fields definition
         } else {
             assert(false);                              // only declaration cannot 
                                                         // construct a type
@@ -46,54 +41,20 @@ Type::Type(AstNode *varDec, const Type &type) {
     if (varDec->tag == TAG_VAR_DEC) {
         varDec = varDec->first_child;
         AstNode *size = varDec->first_sibling->first_sibling;
-        info.array.size = size->ival;
-        info.array.elem = new Type(varDec, type);
+        array.size = size->ival;
+        array.elem = new Type(varDec, type);
     } else {
         *this = type;
     }
 }
 
-Type::Type(const Type &type) {
-    line_no = type.line_no;
-    if (type.kind == BASIC) {
-        kind = BASIC;
-        info.basic = type.info.basic;
-    } else if (type.kind == ARRAY){
-        kind = ARRAY;
-        info.array.size = type.info.array.size;
-        info.array.elem = new Type(*type.info.array.elem);
-    } else {
-        kind = STRUCTURE;
-        info.structure.name = type.info.structure.name;
-        info.structure.fields = type.info.structure.fields;
-    }
-}
-
 Type::~Type() {
-	if (kind == BASIC) {
-        // do nothing
-    } else if (kind == ARRAY) {
-        (*info.array.elem).~Type();
-    } else {
-        info.structure.name.~string();
-        info.structure.fields.~vector();
+    if (kind == ARRAY)
+        delete array.elem;
+    else if (kind == STRUCTURE) {
+        structure.name.~string();
+        structure.fields.~vector();
     }
-}
-
-Type& Type::operator=(const Type &type) {
-    if (type.kind == BASIC) {
-        kind = BASIC;
-        basic = type.basic;
-    } else if (type.kind == ARRAY) {
-        kind = ARRAY;
-        array.size = type.array.size;
-        array.elem = new Type(*type.array.elem);
-    } else {
-        kind = STRUCTURE;
-        structure.name = type.structure.name;
-        structure.fields = type.structure.fields;
-    }
-    return *this;
 }
 
 bool Type::equalStructure(const Type &type) {

@@ -23,7 +23,7 @@ enum Tag {
 };
 
 enum Attr {
-    DEC_LIST, VOID_DEC, FUNC_DEF, FUNC_DEC,
+    DUMMY, DEC_LIST, VOID_DEC, FUNC_DEF, FUNC_DEC,
     STRUCT_DEF, STRUCT_DEC,
     FUNC_VAR, FUNC_EMPTY,
     EMPTY_DEC, ASSIGN_DEC
@@ -49,7 +49,7 @@ public:
     void travesalAst(int);
     void syntaxParse();
     void parseExtDef();
-    Type parseSpecifier();
+    Type* parseSpecifier();
     void parseExtDecList(const Type &type);
     vector<Symbol> parseDefList(bool assign);
     vector<Symbol> parseVarList();
