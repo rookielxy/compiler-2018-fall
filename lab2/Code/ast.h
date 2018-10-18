@@ -49,6 +49,7 @@ public:
     void travesalAst(int);
     void syntaxParse();
     void parseExtDef();
+    Type parseSpecifier();
     void parseExtDecList(const Type &type);
     vector<Symbol> parseDefList(bool assign);
     vector<Symbol> parseVarList();

@@ -20,17 +20,19 @@ Type::Type(AstNode *specifier) {
             assert(false);  
     } else {                       
         kind = STRUCTURE;           // Specifier -> StructSpecifier
-        AstNode *structSpecifier = child,
-                *structTag = structSpecifier->first_sibling,
-                *defList = structSpecifier;
-        assert(structSpecifier->attr == STRUCT_DEF or structSpecifier->attr )
-        if (structSpecifier->attr == STRUCT_DEF) {
-    		structure.name = structTag->first_child->str;
+        AstNode *structTag = child->first_child->first_sibling,
+                *defList = structTag->first_sibling->first_sibling;
+        assert(child->attr == STRUCT_DEF or child->attr == STRUCT_DEC);
+        if (child->attr == STRUCT_DEF) {
+    		if (structTag->first_child->tag == TAG_ID)
+                structure.name = structTag->first_child->str;
+            else
+                structure.name = "anonymous";           // anonymous structure
 
-            // TODO: parse DefList
-        } else if (structSpecifier->attr == STRUCT_DEC) {
-            structure.name = structTag->first_child->str;
-            // TODO: parse DefList
+            structure.fields = defList->parseDefList(false);      // assign not permitted in fields definition
+        } else {
+            assert(false);                              // only declaration cannot 
+                                                        // construct a type
         }
     }
 

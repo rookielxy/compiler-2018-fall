@@ -95,6 +95,7 @@ void AstNode::travesalAst(int indent) {
 }
 
 void AstNode::syntaxParse() {
+    assert(tag == TAG_PROGRAM);
     AstNode *extDefList = first_child, *extDef = extDefList->first_child;
     while (extDef->tag != TAG_EMPTY) {
         extDef->parseExtDef();
@@ -104,27 +105,54 @@ void AstNode::syntaxParse() {
 }
 
 void AstNode::parseExtDef() {
+    assert(tag == TAG_EXT_DEF);
     AstNode *specifier = first_child;
+    auto type = specifier->parseSpecifier();
     if (attr == FUNC_DEC) {                 // ExtDef -> Specifier FunDec SEMI
-        auto func = Function(specifier->first_sibling, Type(specifier), false);
+        auto func = Function(specifier->first_sibling, type, false);
 
         return;
     } else if (attr == FUNC_DEF) {          // ExtDef -> Specifier FunDec Compst
-        auto func = Function(specifier->first_sibling, Type(specifier), true);
+        auto func = Function(specifier->first_sibling, type, true);
+
         return;
     } else if (attr == VOID_DEC) {          // ExtDef -> Specifier SEMI
-        if (specifier->tag == TAG_STRUCT_SPECIFIER)         // structure declaration
-            symTable.defineStruct(Type(specifier));
+                                            // do nothing
         return;
     } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
         AstNode *extDecList = specifier->first_sibling;
-        extDecList->parseExtDecList(Type(specifier));
+        extDecList->parseExtDecList(type);
         return;
     }
     assert(false);
 }
 
+Type AstNode::parseSpecifier() {
+    assert(tag == TAG_SPECIFIER);
+    AstNode *child = first_child;
+    if (tag == TAG_STRUCT_SPECIFIER and child->attr == STRUCT_DEC) {
+        AstNode *optTag = child->first_child->first_sibling;
+        string name = optTag->first_child->str;
+        auto ptr = symTable.findStruct(name);
+        if (ptr == nullptr) {
+            string msg = "Undefined structure ";        // Error: use undefined structure to
+            msg += "\"" + name + "\".";                 // define variable
+            reportError(17, msg, line_no);              // return empty Type;
+            return Type();
+        } else {
+            return *ptr;
+        }
+    } else {
+        auto type = Type(this);
+        if (type->kind == STRUCTURE and
+            type->getName() != "anonymous")
+            symTable.defineStruct(type);
+        return type;
+    }
+}
+
 void AstNode::parseExtDecList(const Type &type) {
+    assert(tag == TAG_EXT_DEC_LIST);
     AstNode *extDecList = this, *varDec = first_child;
     while (varDec->first_sibling != nullptr) {
         symTable.defineSymbol(Symbol(varDec, type));
@@ -134,6 +162,7 @@ void AstNode::parseExtDecList(const Type &type) {
 }
 
 vector<Symbol> AstNode::parseDefList(bool assign) {
+    assert(tag == TAG_DEF_LIST);
     vector<Symbol> result;
     AstNode *defList = this, *def = first_child;
     while (def->tag != TAG_EMPTY) {
@@ -147,6 +176,7 @@ vector<Symbol> AstNode::parseDefList(bool assign) {
 
 void AstNode::parseDecList(vector<Symbol> &symbols, 
                             const Type &type, bool assign) {
+    assert(tag == TAG_DEC_LIST);
     AstNode *decList = this, *dec = first_child;
     while (dec->first_sibling != nullptr) {
         assert(dec->attr == EMPTY_DEC or dec->attr == ASSIGN_DEC);
@@ -181,6 +211,7 @@ void AstNode::parseDecList(vector<Symbol> &symbols,
 }
 
 vector<Symbol> AstNode::parseVarList() {
+    assert(tag == TAG_VAR_LIST);
     AstNode *param = first_child;
     vector<Symbol> result;
     while (param->first_sibling != nullptr) {
