@@ -109,12 +109,17 @@ void AstNode::parseExtDef() {
     AstNode *specifier = first_child;
     auto type = specifier->parseSpecifier();
     if (attr == FUNC_DEC) {                 // ExtDef -> Specifier FunDec SEMI
-        auto func = Function(specifier->first_sibling, type, false);
+        AstNode *funDec = specifier->first_sibling;
+        auto func = Function(funDec, type, false);
         symTable.declareFunc(func);
     } else if (attr == FUNC_DEF) {          // ExtDef -> Specifier FunDec Compst
+        AstNode *funDec = specifier->first_sibling,
+                *compSt = funDec->first_sibling;
         auto func = Function(specifier->first_sibling, type, true);
         symTable.defineFunc(func);
         symTable.enterScope(func);
+        compSt->parseCompSt();
+        symTable.leaveScope();
     } else if (attr == VOID_DEC) {          // ExtDef -> Specifier SEMI
                                     // do nothing
     } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
@@ -229,4 +234,52 @@ vector<Symbol> AstNode::parseVarList() {
         param = param->first_sibling->first_child;
     }
     return result;
+}
+
+void AstNode::parseCompSt() {
+    assert(tag == TAG_COMPST);
+    AstNode *defList = first_child->first_sibling,
+            *stmtList = defList->first_sibling,
+            *stmt = stmtList->first_child;
+    vector<Symbol> symbols = defList->parseDefList(true);
+    for (auto ele: symbols)
+        symTable.defineSymbol(ele);
+
+    while(stmt->tag != TAG_EMPTY) {
+        stmt->parseStmt();
+        stmtList = stmt->first_sibling;
+        stmt = stmtList->first_child;
+    }
+}
+
+void AstNode::parseStmt() {
+    assert(tag == TAG_STMT);
+    if (attr == EXP_STMT) {
+        first_child->parseExp();
+    } else if (attr == COMPST_STMT) {
+        symTable.enterScope();
+        first_child->parseCompSt();
+        symTable.leaveScope();
+    } else if (attr == RETURN_STMT) {
+        AstNode *exp = first_child->first_sibling;
+        exp->parseExp();
+    } else if (attr == IF_STMT or attr == WHILE_STMT) {
+        AstNode *exp = first_child->first_sibling->first_sibling,
+                *stmt = exp->first_sibling->first_sibling;
+        exp->parseExp();
+        stmt->parseStmt();
+    } else if (attr == IF_ELSE_STMT) {
+        AstNode *exp = first_child->first_sibling->first_sibling,
+                *stmt1 = exp->first_sibling->first_sibling,
+                *stmt2 = stmt1->first_sibling->first_sibling;
+        exp->parseExp();
+        stmt1->parseStmt();
+        stmt2->parseStmt();
+    } else {
+        assert(false);
+    }
+}
+
+void AstNode::parseExp() {
+
 }

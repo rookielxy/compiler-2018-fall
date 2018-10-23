@@ -96,12 +96,12 @@ CompSt: LC DefList StmtList RC                  { $$ = new AstNode(TAG_COMPST, 4
 StmtList: Stmt StmtList                         { $$ = new AstNode(TAG_STMT_LIST, 2, $1, $2); }
     | /* empty */                               { $$ = new AstNode(TAG_EMPTY, 0); }
     ;
-Stmt: Exp SEMI                                  { $$ = new AstNode(TAG_STMT, 2, $1, $2); }
-    | CompSt                                    { $$ = new AstNode(TAG_STMT, 1, $1); }
-    | RETURN Exp SEMI                           { $$ = new AstNode(TAG_STMT, 3, $1, $2, $3); }
-    | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE	{ $$ = new AstNode(TAG_STMT, 5, $1, $2, $3, $4, $5); }
-    | IF LP Exp RP Stmt ELSE Stmt               { $$ = new AstNode(TAG_STMT, 7, $1, $2, $3, $4, $5, $6, $7); }
-    | WHILE LP Exp RP Stmt                      { $$ = new AstNode(TAG_STMT, 5, $1, $2, $3, $4, $5); }
+Stmt: Exp SEMI                                  { $$ = new AstNode(TAG_STMT, 2, $1, $2); $$->attr = EXP_STMT; }
+    | CompSt                                    { $$ = new AstNode(TAG_STMT, 1, $1); $$->attr = COMPST_STMT; }
+    | RETURN Exp SEMI                           { $$ = new AstNode(TAG_STMT, 3, $1, $2, $3); $$->attr = RETURN_STMT; }
+    | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE	{ $$ = new AstNode(TAG_STMT, 5, $1, $2, $3, $4, $5); $$->attr = IF_STMT; }
+    | IF LP Exp RP Stmt ELSE Stmt               { $$ = new AstNode(TAG_STMT, 7, $1, $2, $3, $4, $5, $6, $7); $$->attr = IF_ELSE_STMT; }
+    | WHILE LP Exp RP Stmt                      { $$ = new AstNode(TAG_STMT, 5, $1, $2, $3, $4, $5); $$->attr = WHILE_STMT; }
     | error SEMI                                { $$ = new AstNode(TAG_ERROR, 2, $1, $2); syntaxCorrect = false; }
     | WHILE LP error RP Stmt                    { $$ = new AstNode(TAG_ERROR, 5, $1, $2, $3, $4, $5); syntaxCorrect = false; }
     | RETURN error SEMI                         { $$ = new AstNode(TAG_ERROR, 3, $1, $2, $3); syntaxCorrect = false; }
