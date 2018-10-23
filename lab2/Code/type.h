@@ -9,7 +9,6 @@ class AstNode;
 class Type {
     enum {BASIC, ARRAY, STRUCTURE} kind;
     enum {TYPE_INT, TYPE_FLOAT} basic;
-    string str;
     struct {
         Type *elem;
         size_t size;
@@ -29,7 +28,7 @@ public:
 
     bool isBasic() { return kind == BASIC; };
     string getStructName() const { return structure.name; };
-    string getName() const { return str; }
+    string getTypeName() const;
     int getLineNo() const { return line_no; };
 
     bool equalArray(const Type &type);

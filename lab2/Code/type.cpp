@@ -13,7 +13,6 @@ Type::Type(AstNode *specifier) {
             basic = TYPE_FLOAT;
         else
             assert(false);  
-        str = child->str;
     } else {                       
         kind = STRUCTURE;           // Specifier -> StructSpecifier
         AstNode *structTag = child->first_child->first_sibling,
@@ -30,7 +29,6 @@ Type::Type(AstNode *specifier) {
             assert(false);                              // only declaration cannot 
                                                         // construct a type
         }
-        str = "Struct " + structure.name;
     }
 
     line_no = specifier->line_no;
@@ -38,13 +36,10 @@ Type::Type(AstNode *specifier) {
 
 Type::Type(bool integer) {
     kind = BASIC;
-    if (integer) {
+    if (integer)
         basic = TYPE_INT;
-        str = "int";
-    } else {
+    else
         basic = TYPE_FLOAT;
-        str = "float";
-    }
 }
 
 Type::Type(AstNode *varDec, Type *type) {
@@ -119,4 +114,23 @@ bool Type::operator==(const Type &type) {
 	else if (kind == type.kind and kind == STRUCTURE)
 		return equalStructure(type);
 	return false;
+}
+
+string Type::getTypeName() const {
+    if (kind == BASIC)
+        return basic == TYPE_INT? "int" : "float";
+    else if (kind == STRUCTURE)
+        return string("Struct ") + structure.name;
+    else {
+        auto ptr = this;
+        int dimension = 0;
+        while (ptr->kind != ARRAY) {
+            ++dimension;
+            ptr = ptr->array.elem;
+        }
+        string re = ptr->getTypeName();
+        for (int i = 0; i < dimension; ++i)
+            re += "[]";
+        return re;
+    } 
 }
