@@ -6,13 +6,14 @@ Type::Type(AstNode *specifier) {
     assert(child->tag == TAG_STRUCT_SPECIFIER or child->tag == TAG_TYPE);
 
     if (child->tag == TAG_TYPE) {                              
-        kind = BASIC;               // Specifier -> Type 
+        kind = BASIC;               // Specifier -> Type
         if (child->str == "int")
             basic = TYPE_INT;
         else if (child->str == "float")
             basic = TYPE_FLOAT;
         else
             assert(false);  
+        str = child->str;
     } else {                       
         kind = STRUCTURE;           // Specifier -> StructSpecifier
         AstNode *structTag = child->first_child->first_sibling,
@@ -29,9 +30,21 @@ Type::Type(AstNode *specifier) {
             assert(false);                              // only declaration cannot 
                                                         // construct a type
         }
+        str = "Struct " + structure.name;
     }
 
     line_no = specifier->line_no;
+}
+
+Type::Type(bool integer) {
+    kind = BASIC;
+    if (integer) {
+        basic = TYPE_INT;
+        str = "int";
+    } else {
+        basic = TYPE_FLOAT;
+        str = "float";
+    }
 }
 
 Type::Type(AstNode *varDec, Type *type) {

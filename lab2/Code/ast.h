@@ -29,6 +29,12 @@ enum Attr {
     EMPTY_DEC, ASSIGN_DEC,
     EXP_STMT, COMPST_STMT, RETURN_STMT,
     IF_ELSE_STMT, IF_STMT, WHILE_STMT,
+    ASSIGN_EXP, AND_EXP, OR_EXP, REL_EXP,
+    PLUS_EXP, MINUS_EXP, STAR_EXP, DIV_EXP,
+    NEST_EXP, NEG_EXP, NOT_EXP, 
+    FUNC_ARGS_EXP, FUNC_EMPTY_EXP,
+    ARRAY_EXP, STRUCT_EXP,
+    ID_EXP, INT_EXP, FLOAT_EXP
 };
 
 class AstNode {
@@ -45,6 +51,7 @@ public:
     };
     int line_no;
     enum Attr attr;
+    bool lval;
     
     AstNode(enum Tag, int, ...);
     void extraInfo(enum Tag, char *yytext);
@@ -58,7 +65,7 @@ public:
     void parseDecList(vector<Symbol> &symbol, Type *type, bool assign);
     void parseCompSt();
     void parseStmt();
-    void parseExp();
+    Type* parseExp();
 };
 
 extern string DICT[];

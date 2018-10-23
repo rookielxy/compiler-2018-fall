@@ -19,6 +19,7 @@ public:
     int getLineNo() const { return line_no; }
     bool operator==(const Symbol &symbol) { return *type == *symbol.type; }
     // symbols are euqal if their types are equal
+    Type* getType() { return new Type(*type); }
 };
 
 #endif

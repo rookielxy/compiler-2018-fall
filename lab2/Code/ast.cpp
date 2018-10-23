@@ -45,6 +45,7 @@ AstNode::AstNode(enum Tag tag, int n, ...) {
         first_child = first_sibling = nullptr;
     }
 
+    lval = false;
     va_end(valist);
 }
 
@@ -195,28 +196,39 @@ void AstNode::parseDecList(vector<Symbol> &symbols, Type *type, bool assign) {
         AstNode *varDec = dec->first_child;
         auto symbol = new Symbol(varDec, type);
 
-        bool conflict = false;
-        for (auto ele : symbols) {
-            if (ele.getName() == symbol->getName()) {
-                conflict = true;
-                break;
+        if (assign) {
+            symbols.emplace_back(*symbol);
+            if (dec->attr == ASSIGN_DEC) {
+                AstNode *exp = varDec->first_sibling->first_sibling;
+                auto temp = exp->parseExp();
+                delete temp;
+                temp = nullptr;
+            }
+        } else {
+            bool conflict = false;
+            for (auto ele : symbols) {
+                if (ele.getName() == symbol->getName()) {
+                    conflict = true;
+                    break;
+                }
+            }
+
+            if (not conflict)
+                symbols.emplace_back(*symbol);
+            else {
+                string msg = "Redefined field";
+                msg += "\"" + symbol->getName() + "\".";
+                reportError(15, msg, symbol->getLineNo());
+            }
+
+            if (dec->attr == ASSIGN_DEC) {
+                string msg = "Initialize field ";
+                msg += "\"" + symbol->getName() + "\" in definition.";
+                reportError(15, msg, symbol->getLineNo());
             }
         }
-
-        if (not conflict)
-            symbols.emplace_back(*symbol);
-        else {
-            string msg = "Redefined field";
-            msg += "\"" + symbol->getName() + "\".";
-            reportError(15, msg, symbol->getLineNo());
-        }
-
-        if (dec->attr == ASSIGN_DEC and not assign) {
-            string msg = "Initialize field ";
-            msg += "\"" + symbol->getName() + "\" in definition.";
-            reportError(15, msg, symbol->getLineNo());
-        }
         delete symbol;
+        symbol = nullptr;
 
         if (dec->first_sibling == nullptr)
             break;
@@ -255,24 +267,32 @@ void AstNode::parseCompSt() {
 void AstNode::parseStmt() {
     assert(tag == TAG_STMT);
     if (attr == EXP_STMT) {
-        first_child->parseExp();
+        auto type = first_child->parseExp();
+        delete type;
+        type = nullptr;
     } else if (attr == COMPST_STMT) {
         symTable.enterScope();
         first_child->parseCompSt();
         symTable.leaveScope();
     } else if (attr == RETURN_STMT) {
         AstNode *exp = first_child->first_sibling;
-        exp->parseExp();
+        auto type = exp->parseExp();
+        delete type;
+        type = nullptr;
     } else if (attr == IF_STMT or attr == WHILE_STMT) {
         AstNode *exp = first_child->first_sibling->first_sibling,
                 *stmt = exp->first_sibling->first_sibling;
-        exp->parseExp();
+        auto type = exp->parseExp();
+        delete type;
+        type = nullptr;
         stmt->parseStmt();
     } else if (attr == IF_ELSE_STMT) {
         AstNode *exp = first_child->first_sibling->first_sibling,
                 *stmt1 = exp->first_sibling->first_sibling,
                 *stmt2 = stmt1->first_sibling->first_sibling;
-        exp->parseExp();
+        auto type = exp->parseExp();
+        delete type;
+        type = nullptr;
         stmt1->parseStmt();
         stmt2->parseStmt();
     } else {
@@ -280,6 +300,29 @@ void AstNode::parseStmt() {
     }
 }
 
-void AstNode::parseExp() {
-
+Type* AstNode::parseExp() {
+    assert(tag == TAG_EXP);
+    if (attr == INT_EXP) {
+        lval = false;
+        return new Type(true);
+    } else if (attr == FLOAT_EXP) {
+        lval = false;
+        return new Type(false);
+    } else if (attr == ID_EXP) {
+        lval = true;
+        AstNode *id = first_child;
+        assert(id->tag == TAG_ID);
+        auto ptr = symTable.findGlobalSymbol(id->str);
+        if (ptr == nullptr) {
+            string msg = "Undefined variable ";
+            msg += "\"" + id->str + "\"";
+            reportError(1, msg, id->line_no);
+            return nullptr;
+        } else {
+            return ptr->getType();
+        }
+    } else if (attr == FUNC_EMPTY_EXP) {
+        lval = false;
+        AstNode *id = first_child;
+    }
 }

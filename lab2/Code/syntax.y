@@ -123,24 +123,24 @@ Dec:  VarDec                                    { $$ = new AstNode(TAG_DEC, 1, $
     ;
 
 /* Expressions */
-Exp:  Exp ASSIGNOP Exp                          { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | Exp AND Exp                               { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | Exp OR Exp                                { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | Exp RELOP Exp                             { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | Exp PLUS Exp                              { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | Exp MINUS Exp                             { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | Exp STAR Exp                              { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | Exp DIV Exp                               { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | LP Exp RP                                 { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | MINUS Exp                                 { $$ = new AstNode(TAG_EXP, 2, $1, $2); }
-    | NOT Exp                                   { $$ = new AstNode(TAG_EXP, 2, $1, $2); }
-    | ID LP Args RP                             { $$ = new AstNode(TAG_EXP, 4, $1, $2, $3, $4); }
-    | ID LP RP                                  { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | Exp LB Exp RB                             { $$ = new AstNode(TAG_EXP, 4, $1, $2, $3, $4); }
-    | Exp DOT ID                                { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); }
-    | ID                                        { $$ = new AstNode(TAG_EXP, 1, $1); }
-    | INT                                       { $$ = new AstNode(TAG_EXP, 1, $1); }
-    | FLOAT                                     { $$ = new AstNode(TAG_EXP, 1, $1); }
+Exp:  Exp ASSIGNOP Exp                          { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = ASSIGN_EXP; }
+    | Exp AND Exp                               { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = AND_EXP; }
+    | Exp OR Exp                                { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = OR_EXP; }
+    | Exp RELOP Exp                             { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = REL_EXP; }
+    | Exp PLUS Exp                              { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = PLUS_EXP; }
+    | Exp MINUS Exp                             { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = MINUS_EXP; }
+    | Exp STAR Exp                              { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = STAR_EXP; }
+    | Exp DIV Exp                               { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = DIV_EXP; }
+    | LP Exp RP                                 { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = NEST_EXP; }
+    | MINUS Exp                                 { $$ = new AstNode(TAG_EXP, 2, $1, $2); $$->attr = NEG_EXP; }
+    | NOT Exp                                   { $$ = new AstNode(TAG_EXP, 2, $1, $2); $$->attr = NOT_EXP; }
+    | ID LP Args RP                             { $$ = new AstNode(TAG_EXP, 4, $1, $2, $3, $4); $$->attr = FUNC_ARGS_EXP; }
+    | ID LP RP                                  { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = FUNC_EMPTY_EXP; }
+    | Exp LB Exp RB                             { $$ = new AstNode(TAG_EXP, 4, $1, $2, $3, $4); $$->attr = ARRAY_EXP; }
+    | Exp DOT ID                                { $$ = new AstNode(TAG_EXP, 3, $1, $2, $3); $$->attr = STRUCT_EXP; }
+    | ID                                        { $$ = new AstNode(TAG_EXP, 1, $1); $$->attr = ID_EXP; }
+    | INT                                       { $$ = new AstNode(TAG_EXP, 1, $1); $$->attr = INT_EXP; }
+    | FLOAT                                     { $$ = new AstNode(TAG_EXP, 1, $1); $$->attr = FLOAT_EXP; }
     | ID LP error RP                            { $$ = new AstNode(TAG_ERROR, 4, $1, $2, $3, $4); syntaxCorrect = false; }
     | Exp LB error RB                           { $$ = new AstNode(TAG_ERROR, 4, $1, $2, $3, $4); syntaxCorrect = false; }
     ;
