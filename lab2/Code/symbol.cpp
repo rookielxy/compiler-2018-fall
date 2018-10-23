@@ -16,6 +16,12 @@ Symbol::Symbol(const Symbol &symbol) {
 	type = new Type(*symbol.type);
 }
 
+Symbol::~Symbol() {
+	name.~string(); 
+	delete type; 
+	type = nullptr;
+}
+
 
 Symbol::Symbol(AstNode *varDec, Type *type) {
 	AstNode *child = varDec->first_child;

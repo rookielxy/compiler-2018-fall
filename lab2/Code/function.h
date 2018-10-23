@@ -6,11 +6,13 @@
 
 class Function {
 	string name;
-    Type ret;
+    Type *ret;
     vector<Symbol> args;
     bool def;
 public:
-	Function(AstNode *funDec, const Type &type, bool def);
+	Function(const Function &func);
+	~Function();
+	Function(AstNode *funDec, Type *type, bool def);
     string getName() const;
 };
 

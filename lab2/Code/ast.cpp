@@ -111,20 +111,21 @@ void AstNode::parseExtDef() {
     if (attr == FUNC_DEC) {                 // ExtDef -> Specifier FunDec SEMI
         //auto func = Function(specifier->first_sibling, type, false);
 
-        return;
     } else if (attr == FUNC_DEF) {          // ExtDef -> Specifier FunDec Compst
         //auto func = Function(specifier->first_sibling, type, true);
 
-        return;
     } else if (attr == VOID_DEC) {          // ExtDef -> Specifier SEMI
-        return;                             // do nothing
+                                    // do nothing
     } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
         AstNode *extDecList = specifier->first_sibling;
         extDecList->parseExtDecList(type);
-        delete type;
-        return;
+    } else {
+        assert(false);
     }
-    assert(false);
+
+    delete type;
+    type = nullptr;
+    return;
 }
 
 Type *AstNode::parseSpecifier() {
@@ -172,6 +173,7 @@ vector<Symbol> AstNode::parseDefList(bool assign) {
         auto type = specifier->parseSpecifier();
         decList->parseDecList(result, type, assign);
         delete type;
+        type = nullptr;
 
         defList = def->first_sibling;
         def = defList->first_child;
@@ -179,8 +181,7 @@ vector<Symbol> AstNode::parseDefList(bool assign) {
     return result;
 }
 
-void AstNode::parseDecList(vector<Symbol> &symbols, 
-                            Type *type, bool assign) {
+void AstNode::parseDecList(vector<Symbol> &symbols, Type *type, bool assign) {
     assert(tag == TAG_DEC_LIST);
     AstNode *decList = this, *dec = first_child;
     while (true) {

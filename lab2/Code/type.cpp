@@ -62,9 +62,10 @@ Type::Type(const Type &type) {
 }
 
 Type::~Type() {
-    if (kind == ARRAY)
+    if (kind == ARRAY) {
         delete array.elem;
-    else if (kind == STRUCTURE) {
+        array.elem = nullptr;
+    } else if (kind == STRUCTURE) {
         structure.name.~string();
         structure.fields.~vector();
     }
