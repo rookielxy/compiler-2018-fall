@@ -20,7 +20,7 @@ Type::Type(AstNode *specifier) {
         assert(child->attr == STRUCT_DEF or child->attr == STRUCT_DEC);
         if (child->attr == STRUCT_DEF) {
     		if (structTag->first_child->tag == TAG_ID) {
-                structure.name = "Position";            //structTag->first_child->str;
+                structure.name = structTag->first_child->str;
             } else
                 structure.name = "anonymous";           // anonymous structure
 

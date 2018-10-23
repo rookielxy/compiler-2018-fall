@@ -16,7 +16,7 @@ Symbol::Symbol(AstNode *varDec, Type *type) {
 	assert(child->tag == TAG_ID or child->tag == TAG_VAR_DEC);
 	
 	if (child->tag == TAG_ID)
-		this->type = type;
+		this->type = new Type(*type);
 	else
 		this->type = new Type(varDec, type);
 	while (child->tag == TAG_VAR_DEC)

@@ -121,6 +121,7 @@ void AstNode::parseExtDef() {
     } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
         AstNode *extDecList = specifier->first_sibling;
         extDecList->parseExtDecList(type);
+        delete type;
         return;
     }
     assert(false);
@@ -167,8 +168,11 @@ vector<Symbol> AstNode::parseDefList(bool assign) {
     while (defList->tag != TAG_EMPTY) {
         AstNode *specifier = def->first_child, 
                 *decList = specifier->first_sibling;
+
         auto type = specifier->parseSpecifier();
         decList->parseDecList(result, type, assign);
+        delete type;
+
         defList = def->first_sibling;
         def = defList->first_child;
     }
@@ -181,29 +185,30 @@ void AstNode::parseDecList(vector<Symbol> &symbols,
     while (true) {
         assert(dec->attr == EMPTY_DEC or dec->attr == ASSIGN_DEC);
         AstNode *varDec = dec->first_child;
-        auto symbol = Symbol(varDec, type);
+        auto symbol = new Symbol(varDec, type);
 
         bool conflict = false;
         for (auto ele : symbols) {
-            if (ele.getName() == symbol.getName()) {
+            if (ele.getName() == symbol->getName()) {
                 conflict = true;
                 break;
             }
         }
 
         if (not conflict)
-            symbols.emplace_back(symbol);
+            symbols.emplace_back(*symbol);
         else {
             string msg = "Redefined field";
-            msg += "\"" + symbol.getName() + "\".";
-            reportError(15, msg, symbol.getLineNo());
+            msg += "\"" + symbol->getName() + "\".";
+            reportError(15, msg, symbol->getLineNo());
         }
 
         if (dec->attr == ASSIGN_DEC and not assign) {
             string msg = "Initialize field ";
-            msg += "\"" + symbol.getName() + "\" in definition.";
-            reportError(15, msg, symbol.getLineNo());
+            msg += "\"" + symbol->getName() + "\" in definition.";
+            reportError(15, msg, symbol->getLineNo());
         }
+        delete symbol;
 
         if (dec->first_sibling == nullptr)
             break;
