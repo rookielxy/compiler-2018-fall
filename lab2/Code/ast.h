@@ -50,11 +50,11 @@ public:
     void syntaxParse();
     void parseExtDef();
     Type* parseSpecifier();
-    void parseExtDecList(const Type &type);
+    void parseExtDecList(Type *type);
     vector<Symbol> parseDefList(bool assign);
     vector<Symbol> parseVarList();
     void parseDecList(vector<Symbol> &symbol, 
-                        const Type &type, bool assign);
+                        Type *type, bool assign);
 };
 
 extern string DICT[];

@@ -7,13 +7,12 @@
 
 class Symbol {
 	friend class Type;
-
     string name;
-    Type type;
+    Type *type;
     int line_no;
 public:
 	explicit Symbol(AstNode *param);
-    Symbol(AstNode *varDec, const Type &type);
+    Symbol(AstNode *varDec, Type *type);
     string getName() const;
     int getLineNo() const;
 };

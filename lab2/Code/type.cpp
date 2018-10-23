@@ -34,7 +34,7 @@ Type::Type(AstNode *specifier) {
     line_no = specifier->line_no;
 }
 
-Type::Type(AstNode *varDec, const Type &type) {
+Type::Type(AstNode *varDec, Type *type) {
     kind = ARRAY;
     line_no = varDec->line_no;
     assert(varDec->tag == TAG_VAR_DEC or varDec->tag == TAG_ID);
@@ -44,7 +44,7 @@ Type::Type(AstNode *varDec, const Type &type) {
         array.size = size->ival;
         array.elem = new Type(varDec, type);
     } else {
-        *this = type;
+        *this = *type;
     }
 }
 

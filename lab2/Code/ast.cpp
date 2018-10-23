@@ -120,7 +120,7 @@ void AstNode::parseExtDef() {
         return;                             // do nothing
     } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
         AstNode *extDecList = specifier->first_sibling;
-        extDecList->parseExtDecList(*type);
+        extDecList->parseExtDecList(type);
         return;
     }
     assert(false);
@@ -129,7 +129,7 @@ void AstNode::parseExtDef() {
 Type *AstNode::parseSpecifier() {
     assert(tag == TAG_SPECIFIER);
     AstNode *child = first_child;
-    if (tag == TAG_STRUCT_SPECIFIER and child->attr == STRUCT_DEC) {
+    if (child->tag == TAG_STRUCT_SPECIFIER and child->attr == STRUCT_DEC) {
         AstNode *optTag = child->first_child->first_sibling;
         string name = optTag->first_child->str;
         auto ptr = symTable.findStruct(name);
@@ -139,18 +139,18 @@ Type *AstNode::parseSpecifier() {
             reportError(17, msg, line_no);              // return empty Type;
             return new Type();
         } else {
-            return ptr;
+            return new Type(*ptr);
         }
     } else {
-        auto type = new Type(this);
-        if (not type->isBasic() and
-            type->getStructName() != "anonymous")
-            symTable.defineStruct(*type);
+        auto type = new Type(this);                     // else branch reached if: 
+        if (not type->isBasic() and                     // 1. Specifier -> TYPE 
+            type->getStructName() != "anonymous")       // 2. Specifier -> StructSpecifier
+            symTable.defineStruct(*type);               //              -> STRUCT OptTag LC DefList RC
         return type;
     }
 }
 
-void AstNode::parseExtDecList(const Type &type) {
+void AstNode::parseExtDecList(Type *type) {
     assert(tag == TAG_EXT_DEC_LIST);
     AstNode *extDecList = this, *varDec = first_child;
     while (varDec->first_sibling != nullptr) {
@@ -167,14 +167,15 @@ vector<Symbol> AstNode::parseDefList(bool assign) {
     while (defList->tag != TAG_EMPTY) {
         AstNode *specifier = def->first_child, 
                 *decList = specifier->first_sibling;
-        decList->parseDecList(result, Type(specifier), assign);
+        auto type = specifier->parseSpecifier();
+        decList->parseDecList(result, type, assign);
         defList = def->first_sibling;
         def = defList->first_child;
     }
 }
 
 void AstNode::parseDecList(vector<Symbol> &symbols, 
-                            const Type &type, bool assign) {
+                            Type *type, bool assign) {
     assert(tag == TAG_DEC_LIST);
     AstNode *decList = this, *dec = first_child;
     while (true) {

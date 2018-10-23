@@ -21,7 +21,7 @@ class Type {
 public:
     Type() = default;
     explicit Type(AstNode *specifier);
-    Type(AstNode *varDec, const Type &type);
+    Type(AstNode *varDec, Type *type);
     ~Type();
 
     bool isBasic() { return kind == BASIC; };
