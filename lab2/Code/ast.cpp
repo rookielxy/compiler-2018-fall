@@ -109,11 +109,12 @@ void AstNode::parseExtDef() {
     AstNode *specifier = first_child;
     auto type = specifier->parseSpecifier();
     if (attr == FUNC_DEC) {                 // ExtDef -> Specifier FunDec SEMI
-        //auto func = Function(specifier->first_sibling, type, false);
-
+        auto func = Function(specifier->first_sibling, type, false);
+        symTable.declareFunc(func);
     } else if (attr == FUNC_DEF) {          // ExtDef -> Specifier FunDec Compst
-        //auto func = Function(specifier->first_sibling, type, true);
-
+        auto func = Function(specifier->first_sibling, type, true);
+        symTable.defineFunc(func);
+        symTable.enterScope(func);
     } else if (attr == VOID_DEC) {          // ExtDef -> Specifier SEMI
                                     // do nothing
     } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI

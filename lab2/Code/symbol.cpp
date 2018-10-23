@@ -37,11 +37,3 @@ Symbol::Symbol(AstNode *varDec, Type *type) {
 	line_no = child->line_no;
 	name = child->str;
 }
-
-string Symbol::getName() const {
-	return name;
-}
-
-int Symbol::getLineNo() const {
-	return line_no;
-}

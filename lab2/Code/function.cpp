@@ -6,6 +6,7 @@ Function::Function(const Function& func) {
 	ret = new Type(*func.ret);
 	args = func.args;
 	def = func.def;
+	line_no = func.line_no;
 }
 
 Function::~Function() {
@@ -24,8 +25,19 @@ Function::Function(AstNode *funDec, Type *type, bool def) {
 		AstNode *varList = funDec->first_child->first_sibling->first_sibling;
 		args = varList->parseVarList();
 	}
+	line_no = funDec->line_no;
 }
 
-string Function::getName() const {
-	return name;
+bool Function::operator==(const Function &func) {
+	if (name != func.name)
+		return false;
+	if (not (*ret == *func.ret))
+		return false;
+	if (args.size() != func.args.size())
+		return false;
+	for (int i = 0; i < args.size(); ++i) {
+		if (not (args[i] == func.args[i]))
+			return false;
+	}
+	return true;
 }

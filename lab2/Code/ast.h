@@ -53,8 +53,7 @@ public:
     void parseExtDecList(Type *type);
     vector<Symbol> parseDefList(bool assign);
     vector<Symbol> parseVarList();
-    void parseDecList(vector<Symbol> &symbol, 
-                        Type *type, bool assign);
+    void parseDecList(vector<Symbol> &symbol, Type *type, bool assign);
 };
 
 extern string DICT[];

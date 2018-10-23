@@ -20,9 +20,11 @@ class SymbolTable {
 public:
     SymbolTable();
     void enterScope();
+    void enterScope(const Function &func);
     void leaveScope();
     void defineStruct(const Type &type);
     void defineSymbol(const Symbol &symbol);
+    void declareFunc(const Function &func);
     void defineFunc(const Function &func);
     Type* findStruct(const string &name);
     Symbol* findLocalSymbol(const string &name);

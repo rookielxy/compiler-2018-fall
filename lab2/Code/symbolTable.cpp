@@ -24,6 +24,13 @@ void SymbolTable::enterScope() {
     scopes.emplace_back(newScope);
 }
 
+void SymbolTable::enterScope(const Function &func) {
+	Scope newScope;
+	scopes.emplace_back(newScope);
+	for (auto arg: func.getArgs())
+		defineSymbol(arg);
+}
+
 void SymbolTable::leaveScope() {
     scopes.pop_back();
 }
@@ -50,11 +57,37 @@ void SymbolTable::defineSymbol(const Symbol &symbol) {
 	}
 }
 
-void SymbolTable::defineFunc(const Function &func) {
-	if (findStruct(func.getName()) != nullptr) {
-
+void SymbolTable::declareFunc(const Function &func) {
+	auto funcPtr = findFunc(func.getName());
+	if (funcPtr != nullptr) {
+		if (not (*funcPtr == func)) {
+			string msg = "Inconsistent declaration of function ";
+			msg += "\"" + func.getName() + "\"";
+			reportError(19, msg, func.getLineNo());
+		}
+	} else {
+		decFunc.emplace(func.getName(), func);
 	}
-	decFunc.emplace(func.getName(), func);
+}
+
+void SymbolTable::defineFunc(const Function &func) {
+	auto funcPtr = findFunc(func.getName());
+	if (funcPtr != nullptr) {
+		if (funcPtr->isDef()) {
+			string msg = "Redefined function ";
+			msg += "\"" + func.getName() + "\"";
+			reportError(4, msg, func.getLineNo());
+		} else {
+			if (not (*funcPtr == func)) {
+				string msg = "Inconsistent declaration of function ";
+				msg += "\"" + func.getName() + "\"";
+				reportError(19, msg, funcPtr->getLineNo());
+			}
+			decFunc.insert(pair<string, Function>(func.getName(), func));
+		}
+	} else {
+		decFunc.emplace(func.getName(), func);
+	}
 }
 
 Type* SymbolTable::findStruct(const string &name) {

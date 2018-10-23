@@ -15,8 +15,10 @@ public:
     Symbol(AstNode *varDec, Type *type);
     Symbol(const Symbol &symbol);
     ~Symbol();
-    string getName() const;
-    int getLineNo() const;
+    string getName() const { return name; }
+    int getLineNo() const { return line_no; }
+    bool operator==(const Symbol &symbol) { return *type == *symbol.type; }
+    // symbols are euqal if their types are equal
 };
 
 #endif
