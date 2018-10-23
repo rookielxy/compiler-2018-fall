@@ -13,6 +13,8 @@ class Symbol {
 public:
 	explicit Symbol(AstNode *param);
     Symbol(AstNode *varDec, Type *type);
+    Symbol(const Symbol &symbol);
+    ~Symbol() { name.~string(); delete type; }
     string getName() const;
     int getLineNo() const;
 };

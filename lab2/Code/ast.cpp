@@ -176,6 +176,7 @@ vector<Symbol> AstNode::parseDefList(bool assign) {
         defList = def->first_sibling;
         def = defList->first_child;
     }
+    return result;
 }
 
 void AstNode::parseDecList(vector<Symbol> &symbols, 

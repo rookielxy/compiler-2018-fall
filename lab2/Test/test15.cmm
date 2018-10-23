@@ -4,3 +4,6 @@ struct Position
 	int z = 0;
 	int x;
 };
+
+struct Position b;
+int x;

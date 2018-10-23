@@ -10,6 +10,12 @@ Symbol::Symbol(AstNode *param) {
     type = specifier->parseSpecifier();
 }
 
+Symbol::Symbol(const Symbol &symbol) {
+	name = symbol.name;
+	line_no = symbol.line_no;
+	type = new Type(*symbol.type);
+}
+
 
 Symbol::Symbol(AstNode *varDec, Type *type) {
 	AstNode *child = varDec->first_child;

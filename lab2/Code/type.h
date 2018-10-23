@@ -21,6 +21,7 @@ class Type {
 public:
     Type() = default;
     explicit Type(AstNode *specifier);
+    Type(const Type &type);
     Type(AstNode *varDec, Type *type);
     ~Type();
 

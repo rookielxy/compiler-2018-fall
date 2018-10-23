@@ -48,6 +48,19 @@ Type::Type(AstNode *varDec, Type *type) {
     }
 }
 
+Type::Type(const Type &type) {
+    line_no = type.line_no;
+    if (type.kind == BASIC)
+        basic = type.basic;
+    else if (type.kind == ARRAY) {
+        array.elem = new Type(*type.array.elem);
+        array.size = type.array.size;
+    } else {
+        structure.name = type.structure.name;
+        structure.fields = type.structure.fields;
+    }
+}
+
 Type::~Type() {
     if (kind == ARRAY)
         delete array.elem;
