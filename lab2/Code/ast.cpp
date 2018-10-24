@@ -123,7 +123,7 @@ void AstNode::parseExtDef() {
         compSt->parseCompSt();
         symTable.leaveScope();
     } else if (attr == VOID_DEC) {          // ExtDef -> Specifier SEMI
-                                    // do nothing
+                                            // do nothing
     } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
         AstNode *extDecList = specifier->first_sibling;
         extDecList->parseExtDecList(type);
@@ -416,6 +416,23 @@ Type* AstNode::parseExp() {
             return nullptr; 
         }
 
+        if (not type2->isInt()) {
+            string msg = "\"";
+            msg += exp2->str + "\" is not a integer";
+            reportError(12, msg, exp2->line_no);
+            delete type1, type2;
+            return nullptr; 
+        }
+
+        return type1->arrayElemType();
+
+    } else if (attr == NEST_EXP) {
+        AstNode *exp = first_child->first_sibling;
+        auto type = exp->parseExp();
+        if (type == nullptr)
+            return nullptr;
+        else
+            return type;
 
     }
 }

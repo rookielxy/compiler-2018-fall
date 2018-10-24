@@ -31,6 +31,8 @@ public:
     bool isBasic() const { return kind == BASIC; }
     bool isStruct() const { return kind == STRUCTURE; }
     bool isArray() const { return kind == ARRAY; }
+    bool isInt() const { return kind == BASIC and basic == TYPE_INT; }
+    bool isFloat() const { return kind == BASIC and basic == TYPE_FLOAT; }
     string getStructName() const { return structure.name; }
     string getTypeName() const;
     int getLineNo() const { return line_no; }
@@ -40,6 +42,7 @@ public:
     bool operator==(const Type &type);
 
     Symbol* findField(const string &fieldName);
+    Type* arrayElemType() const { return new Type(*array.elem); }
 
     friend string transferArgsToName(const vector<Type> &args);
 };
