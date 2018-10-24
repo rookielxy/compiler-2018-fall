@@ -23,21 +23,27 @@ public:
     explicit Type(AstNode *specifier);
     explicit Type(bool integer);
     Type(AstNode *varDec, Type *type);
-    
+
     Type(const Type &type);
     Type& operator=(const Type &type);
     ~Type();
 
-    bool isBasic() { return kind == BASIC; };
-    string getStructName() const { return structure.name; };
+    bool isBasic() const { return kind == BASIC; }
+    bool isStruct() const { return kind == STRUCTURE; }
+    bool isArray() const { return kind == ARRAY; }
+    string getStructName() const { return structure.name; }
     string getTypeName() const;
-    int getLineNo() const { return line_no; };
+    int getLineNo() const { return line_no; }
 
     bool equalArray(const Type &type);
     bool equalStructure(const Type &type);
     bool operator==(const Type &type);
 
+    Symbol* findField(const string &fieldName);
 
+    friend string transferArgsToName(const vector<Type> &args);
 };
+
+string transferArgsToName(const vector<Type> &argTypes);
 
 #endif

@@ -1,5 +1,6 @@
 #include "function.h"
 #include "ast.h"
+#include "type.h"
 
 Function::Function(const Function &func) {
 	name = func.name;
@@ -49,4 +50,20 @@ bool Function::operator==(const Function &func) {
 			return false;
 	}
 	return true;
+}
+
+vector<Type> Function::getArgsType() const {
+	vector<Type> types;
+	for (auto ele : args) {
+		auto temp = ele.getType();
+		types.emplace_back(*temp);
+		delete temp;
+		temp = nullptr;
+	}
+	return types;
+}
+
+string Function::getArgsName() const {
+	auto types = getArgsType();
+	return transferArgsToName(types);
 }

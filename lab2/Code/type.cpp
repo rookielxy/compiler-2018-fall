@@ -1,5 +1,6 @@
 #include "type.h"
 #include "ast.h"
+#include "symbol.h"
 
 Type::Type(AstNode *specifier) {
     AstNode *child = specifier->first_child;
@@ -134,7 +135,7 @@ string Type::getTypeName() const {
     if (kind == BASIC)
         return basic == TYPE_INT? "int" : "float";
     else if (kind == STRUCTURE)
-        return string("Struct ") + structure.name;
+        return string("struct ") + structure.name;
     else {
         auto ptr = this;
         int dimension = 0;
@@ -147,4 +148,23 @@ string Type::getTypeName() const {
             re += "[]";
         return re;
     } 
+}
+
+string transferArgsToName(const vector<Type> &argTypes) {
+    if (argTypes.empty())
+        return "()";
+    string msg = "(";
+    msg += argTypes.front().getTypeName();
+    for (int i = 1; i < argTypes.size(); ++i)
+        msg += ", " + argTypes[i].getTypeName();
+    msg += ")";
+    return msg;
+}
+
+Symbol* Type::findField(const string &fieldName) {
+    for (auto ele : structure.fields) {
+        if (ele.getName() == fieldName)
+            return &ele;
+    }
+    return nullptr;
 }

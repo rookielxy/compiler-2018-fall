@@ -35,12 +35,16 @@ AstNode::AstNode(enum Tag tag, int n, ...) {
         AstNode *child = va_arg(valist, AstNode*);
         line_no = child->line_no;
         first_child = child;
-        
+        if (tag == TAG_EXP)
+            str = child->str;
         for(int i = 1; i < n; ++i) {
             child->first_sibling = va_arg(valist, AstNode*);
             child = child->first_sibling;
+            if (tag == TAG_EXP)
+                str += child->str;
         }
     } else {
+        str = va_arg(valist, char*);
         line_no = va_arg(valist, int);
         first_child = first_sibling = nullptr;
     }
@@ -51,9 +55,6 @@ AstNode::AstNode(enum Tag tag, int n, ...) {
 
 void AstNode::extraInfo(enum Tag tag, char *yytext) {
     switch (tag) {
-        case TAG_ID: case TAG_TYPE:
-            str = string(yytext);
-            break;
         case TAG_HEX:
             sscanf(yytext, "%x", &ival);
             break;
@@ -305,9 +306,11 @@ Type* AstNode::parseExp() {
     if (attr == INT_EXP) {
         lval = false;
         return new Type(true);
+
     } else if (attr == FLOAT_EXP) {
         lval = false;
         return new Type(false);
+
     } else if (attr == ID_EXP) {
         lval = true;
         AstNode *id = first_child;
@@ -318,24 +321,117 @@ Type* AstNode::parseExp() {
             msg += "\"" + id->str + "\"";
             reportError(1, msg, id->line_no);
             return nullptr;
-        } else {
+        } else
             return ptr->getType();
-        }
-    } else if (attr == FUNC_EMPTY_EXP) {
+
+    } else if (attr == FUNC_EMPTY_EXP or attr == FUNC_ARGS_EXP) {
         lval = false;
         AstNode *id = first_child;
         assert(id->tag == TAG_ID);
         auto ptr = symTable.findFunc(id->str);
         if (ptr == nullptr) {
-            string msg = "Undefined function ";
-            msg += "\"" + id->str + "\"";
-            reportError(2, msg, id->line_no);
-            return nullptr;
-        } else {
-            if (not ptr->getArgs().empty()) {
-                string msg = "Function";
-                msg += "\"" + ptr->getName() + "(";
+            if (symTable.findGlobalSymbol(id->str) == nullptr) {
+                string msg = "Undefined function ";
+                msg += "\"" + id->str + "\"";
+                reportError(2, msg, id->line_no);
+
+            } else {
+                string msg = "\"";
+                msg += id->str + "\" is not a function";
+                reportError(11, msg, id->line_no); 
             }
+            return nullptr;
+
+        } else {
+            vector<Type> types1 = ptr->getArgsType(), types2;
+            if (attr == FUNC_ARGS_EXP) {
+                AstNode *args = id->first_sibling->first_sibling;
+                types2 = args->parseArgs();
+            }
+            bool applicable = true;
+            if (types1.size() != types2.size())
+                applicable = false;
+            else {
+                for (int i = 0; i < types1.size(); ++i) {
+                    if (not (types1[i] == types2[i])) {
+                        applicable = false;
+                        break;
+                    }
+                }
+            }
+
+            if (not applicable) {
+                string msg = "Function";
+                msg += "\"" + ptr->getName() + ptr->getArgsName() + "\"";
+                msg += "is not applicable for arguments " + transferArgsToName(types2);
+                reportError(9, msg, id->line_no);
+                return nullptr;
+            }    
         }
+        return ptr->getRetType();
+
+    } else if (attr == STRUCT_EXP) {
+        lval = true;
+        AstNode *exp = first_child, *id = exp->first_sibling->first_sibling;
+        auto type = exp->parseExp();
+        if (type == nullptr)        // already encountered error
+            return nullptr;         // simply return
+
+        if (not type->isStruct()) {
+            string msg = "Illegal use of \".\"";
+            reportError(13, msg, exp->line_no);
+            delete type;
+            type = nullptr;
+            return nullptr;
+        }
+
+        auto field = type->findField(id->str);
+        if (field == nullptr) {
+            string msg = "Non-existent field ";
+            msg += "\"" + id->str + "\"";
+            reportError(14, msg, exp->line_no);
+            delete type;
+            type = nullptr;
+            return nullptr;
+        }
+        
+        auto fieldType = field->getType();
+        delete type;
+        type = nullptr;
+        return fieldType;
+
+    } else if (attr == ARRAY_EXP) {
+        AstNode *exp1 = first_child, *exp2 = exp1->first_sibling->first_sibling;
+        auto type1 = exp1->parseExp(), type2 = exp2->parseExp();
+        if (type1 == nullptr or type2 == nullptr) {
+            delete type1, type2;
+            return nullptr;
+        }
+
+        if (not type1->isArray()) {
+            string msg = "\"";
+            msg += exp1->str + "\" is not a array";
+            reportError(10, msg, exp1->line_no);
+            delete type1, type2;
+            return nullptr; 
+        }
+
+
     }
+}
+
+vector<Type> AstNode::parseArgs() {
+    assert(tag == TAG_ARGS);
+    vector<Type> types;
+    AstNode *args = this, *exp = first_child;
+    while (exp->first_sibling != nullptr) {
+        auto temp = exp->parseExp();
+        types.emplace_back(*temp);
+        delete temp;
+        temp = nullptr;
+
+        args = exp->first_sibling->first_sibling;
+        exp = args->first_child;
+    }
+    return types;
 }

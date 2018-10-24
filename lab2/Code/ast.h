@@ -44,8 +44,8 @@ public:
     enum Tag tag;
     AstNode* first_child;
     AstNode* first_sibling;
+    string str;
     union {
-        string str;
         int ival;
         float fval;
     };
@@ -66,6 +66,7 @@ public:
     void parseCompSt();
     void parseStmt();
     Type* parseExp();
+    vector<Type> parseArgs();
 };
 
 extern string DICT[];
