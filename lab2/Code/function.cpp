@@ -1,7 +1,7 @@
 #include "function.h"
 #include "ast.h"
 
-Function::Function(const Function& func) {
+Function::Function(const Function &func) {
 	name = func.name;
 	ret = new Type(*func.ret);
 	args = func.args;
@@ -14,6 +14,15 @@ Function::~Function() {
 	delete ret;
 	ret = nullptr;
 	args.~vector();
+}
+
+Function& Function::operator=(const Function &func) {
+	name = func.name;
+	ret = new Type(*func.ret);
+	args = func.args;
+	def = func.def;
+	line_no = func.line_no;
+	return *this;
 }
 
 Function::Function(AstNode *funDec, Type *type, bool def) {

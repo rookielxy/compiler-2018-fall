@@ -13,6 +13,8 @@ class Function {
 public:
 	Function(const Function &func);
 	~Function();
+	Function& operator=(const Function &func);
+	
 	Function(AstNode *funDec, Type *type, bool def);
     string getName() const { return name; }
     bool isDef() const { return def; }

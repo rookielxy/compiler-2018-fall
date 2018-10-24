@@ -16,6 +16,13 @@ Symbol::Symbol(const Symbol &symbol) {
 	type = new Type(*symbol.type);
 }
 
+Symbol& Symbol::operator=(const Symbol &symbol) {
+	name = symbol.name;
+	line_no = symbol.line_no;
+	type = new Type(*symbol.type);
+	return *this;
+}
+
 Symbol::~Symbol() {
 	name.~string(); 
 	delete type; 

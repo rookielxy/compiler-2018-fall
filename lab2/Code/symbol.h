@@ -13,8 +13,11 @@ class Symbol {
 public:
 	explicit Symbol(AstNode *param);
     Symbol(AstNode *varDec, Type *type);
+
     Symbol(const Symbol &symbol);
     ~Symbol();
+    Symbol& operator=(const Symbol &symbol);
+
     string getName() const { return name; }
     int getLineNo() const { return line_no; }
     bool operator==(const Symbol &symbol) { return *type == *symbol.type; }

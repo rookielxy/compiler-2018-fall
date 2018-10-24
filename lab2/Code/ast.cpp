@@ -324,5 +324,18 @@ Type* AstNode::parseExp() {
     } else if (attr == FUNC_EMPTY_EXP) {
         lval = false;
         AstNode *id = first_child;
+        assert(id->tag == TAG_ID);
+        auto ptr = symTable.findFunc(id->str);
+        if (ptr == nullptr) {
+            string msg = "Undefined function ";
+            msg += "\"" + id->str + "\"";
+            reportError(2, msg, id->line_no);
+            return nullptr;
+        } else {
+            if (not ptr->getArgs().empty()) {
+                string msg = "Function";
+                msg += "\"" + ptr->getName() + "(";
+            }
+        }
     }
 }

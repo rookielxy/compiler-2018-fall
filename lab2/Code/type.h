@@ -22,8 +22,10 @@ public:
     Type() = default;
     explicit Type(AstNode *specifier);
     explicit Type(bool integer);
-    Type(const Type &type);
     Type(AstNode *varDec, Type *type);
+    
+    Type(const Type &type);
+    Type& operator=(const Type &type);
     ~Type();
 
     bool isBasic() { return kind == BASIC; };
@@ -35,7 +37,7 @@ public:
     bool equalStructure(const Type &type);
     bool operator==(const Type &type);
 
-    void fieldConflict();
+
 };
 
 #endif
