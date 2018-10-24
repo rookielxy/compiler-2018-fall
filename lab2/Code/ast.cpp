@@ -40,7 +40,7 @@ AstNode::AstNode(enum Tag tag, int n, ...) {
         for(int i = 1; i < n; ++i) {
             child->first_sibling = va_arg(valist, AstNode*);
             child = child->first_sibling;
-            if (tag == TAG_EXP)
+            if (tag == TAG_EXP or tag == TAG_ARGS)
                 str += child->str;
         }
     } else {
@@ -117,7 +117,7 @@ void AstNode::parseExtDef() {
     } else if (attr == FUNC_DEF) {          // ExtDef -> Specifier FunDec Compst
         AstNode *funDec = specifier->first_sibling,
                 *compSt = funDec->first_sibling;
-        auto func = Function(specifier->first_sibling, type, true);
+        auto func = Function(funDec, type, true);
         symTable.defineFunc(func);
         symTable.enterScope(func);
         compSt->parseCompSt(func.getRetType());
@@ -171,8 +171,10 @@ void AstNode::parseExtDecList(Type *type) {
 }
 
 vector<Symbol> AstNode::parseDefList(bool assign) {
-    assert(tag == TAG_DEF_LIST);
+    assert(tag == TAG_DEF_LIST or tag == TAG_EMPTY);
     vector<Symbol> result;
+    if (tag == TAG_EMPTY)
+        return result;
     AstNode *defList = this, *def = first_child;
     while (defList->tag != TAG_EMPTY) {
         AstNode *specifier = def->first_child, 
@@ -195,41 +197,44 @@ void AstNode::parseDecList(vector<Symbol> &symbols, Type *type, bool assign) {
     while (true) {
         assert(dec->attr == EMPTY_DEC or dec->attr == ASSIGN_DEC);
         AstNode *varDec = dec->first_child;
-        auto symbol = new Symbol(varDec, type);
+        auto symbol = Symbol(varDec, type);
 
         if (assign) {
-            symbols.emplace_back(*symbol);
+            symbols.emplace_back(symbol);
             if (dec->attr == ASSIGN_DEC) {
                 AstNode *exp = varDec->first_sibling->first_sibling;
                 auto temp = exp->parseExp();
+                if (not (*temp == *type)) {
+                    string msg = "Type mismatched for assignment";
+                    reportError(5, msg, varDec->line_no);
+                }
                 delete temp;
                 temp = nullptr;
             }
+
         } else {
             bool conflict = false;
-            for (auto ele : symbols) {
-                if (ele.getName() == symbol->getName()) {
+            for (auto &ele : symbols) {
+                if (ele.getName() == symbol.getName()) {
                     conflict = true;
                     break;
                 }
             }
 
             if (not conflict)
-                symbols.emplace_back(*symbol);
+                symbols.emplace_back(symbol);
             else {
                 string msg = "Redefined field";
-                msg += "\"" + symbol->getName() + "\".";
-                reportError(15, msg, symbol->getLineNo());
+                msg += "\"" + symbol.getName() + "\".";
+                reportError(15, msg, symbol.getLineNo());
             }
 
             if (dec->attr == ASSIGN_DEC) {
                 string msg = "Initialize field ";
-                msg += "\"" + symbol->getName() + "\" in definition.";
-                reportError(15, msg, symbol->getLineNo());
+                msg += "\"" + symbol.getName() + "\" in definition.";
+                reportError(15, msg, symbol.getLineNo());
             }
         }
-        delete symbol;
-        symbol = nullptr;
 
         if (dec->first_sibling == nullptr)
             break;
@@ -242,8 +247,10 @@ vector<Symbol> AstNode::parseVarList() {
     assert(tag == TAG_VAR_LIST);
     AstNode *param = first_child;
     vector<Symbol> result;
-    while (param->first_sibling != nullptr) {
+    while (true) {
         result.emplace_back(Symbol(param));
+        if (param->first_sibling == nullptr)
+            break;
         param = param->first_sibling->first_child;
     }
     return result;
@@ -258,7 +265,7 @@ void AstNode::parseCompSt(Type *retType) {
     for (auto ele: symbols)
         symTable.defineSymbol(ele);
 
-    while(stmt->tag != TAG_EMPTY) {
+    while(stmtList->tag != TAG_EMPTY) {
         stmt->parseStmt(retType);
         stmtList = stmt->first_sibling;
         stmt = stmtList->first_child;
@@ -365,9 +372,9 @@ Type* AstNode::parseExp() {
             }
 
             if (not applicable) {
-                string msg = "Function";
+                string msg = "Function ";
                 msg += "\"" + ptr->getName() + ptr->getArgsName() + "\"";
-                msg += "is not applicable for arguments " + transferArgsToName(types2);
+                msg += " is not applicable for arguments " + transferArgsToName(types2);
                 reportError(9, msg, id->line_no);
                 return nullptr;
             }    
@@ -460,14 +467,16 @@ Type* AstNode::parseExp() {
         lval = false;
         AstNode *exp1 = first_child, 
                 *exp2 = exp1->first_sibling->first_sibling;
+
+        auto type1 = exp1->parseExp(),
+            type2 = exp2->parseExp();
+
         if (not exp1->lval) {
             string msg = "The left-hand side of an assignment must be a variable";
             reportError(6, msg, exp1->line_no);
             return nullptr;
         }
 
-        auto type1 = exp1->parseExp(),
-            type2 = exp2->parseExp();
         if (type1 == nullptr or type2 == nullptr) {
             delete type1, type2;
             type1 = type2 = nullptr;
@@ -497,12 +506,14 @@ Type* AstNode::parseExp() {
             return nullptr;
         }
 
-        bool error1 = (attr == AND_EXP or attr == OR_EXP or attr == REL_EXP) and
-                    (not (type1->isInt() and type2->isInt())),
-            error2 = (attr == PLUS_EXP or attr == MINUS_EXP or 
-                    attr == STAR_EXP or attr == DIV_EXP) and 
-                    (not (type1->isBasic() and type2->isBasic()));
-        if (error1 or error2) {
+        bool error;
+        if (attr == AND_EXP or attr == OR_EXP or attr == REL_EXP)
+            error = not (type1->isInt() and type2->isInt());
+        else 
+            error = not ((type1->isInt() and type2->isInt()) or 
+                        (type1->isFloat() and type2->isFloat()));
+
+        if (error) {
             string msg = "Type mismatched for operands";
             reportError(7, msg, exp1->line_no);
             delete type1, type2;
@@ -519,12 +530,14 @@ vector<Type> AstNode::parseArgs() {
     assert(tag == TAG_ARGS);
     vector<Type> types;
     AstNode *args = this, *exp = first_child;
-    while (exp->first_sibling != nullptr) {
+    while (true) {
         auto temp = exp->parseExp();
         types.emplace_back(*temp);
         delete temp;
         temp = nullptr;
 
+        if (exp->first_sibling == nullptr)
+            break;
         args = exp->first_sibling->first_sibling;
         exp = args->first_child;
     }

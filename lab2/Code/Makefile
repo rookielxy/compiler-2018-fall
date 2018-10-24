@@ -5,7 +5,7 @@
 CXX = g++
 FLEX = flex
 BISON = bison
-CPPFLAGS = -w -g -std=c++11
+CPPFLAGS = -g -std=c++11
 
 # 编译目标：src目录下的所有.cpp文件
 CFILES = $(shell find ./ -name "*.cpp")

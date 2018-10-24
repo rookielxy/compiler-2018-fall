@@ -44,20 +44,21 @@ Type::Type(bool integer) {
 }
 
 Type::Type(AstNode *varDec, Type *type) {
-    kind = ARRAY;
     line_no = varDec->line_no;
     assert(varDec->tag == TAG_VAR_DEC or varDec->tag == TAG_ID);
-    if (varDec->tag == TAG_VAR_DEC) {
-        varDec = varDec->first_child;
+    varDec = varDec->first_child;
+    if (varDec->tag == TAG_ID) {
+        *this = *type;
+    } else {
+        kind = ARRAY;
         AstNode *size = varDec->first_sibling->first_sibling;
         array.size = size->ival;
         array.elem = new Type(varDec, type);
-    } else {
-        *this = *type;
     }
 }
 
 Type::Type(const Type &type) {
+    kind = type.kind;
     line_no = type.line_no;
     if (type.kind == BASIC)
         basic = type.basic;
@@ -66,11 +67,13 @@ Type::Type(const Type &type) {
         array.size = type.array.size;
     } else {
         structure.name = type.structure.name;
-        structure.fields = type.structure.fields;
+        for (auto ele : type.structure.fields)
+            structure.fields.emplace_back(ele);
     }
 }
 
 Type& Type::operator=(const Type &type) {
+    kind = type.kind;
     line_no = type.line_no;
     if (type.kind == BASIC)
         basic = type.basic;
@@ -79,7 +82,8 @@ Type& Type::operator=(const Type &type) {
         array.size = type.array.size;
     } else {
         structure.name = type.structure.name;
-        structure.fields = type.structure.fields;
+        for (auto ele : type.structure.fields)
+            structure.fields.emplace_back(ele);
     }
     return *this;
 }
@@ -162,7 +166,7 @@ string transferArgsToName(const vector<Type> &argTypes) {
 }
 
 Symbol* Type::findField(const string &fieldName) {
-    for (auto ele : structure.fields) {
+    for (auto &ele : structure.fields) {
         if (ele.getName() == fieldName)
             return &ele;
     }
