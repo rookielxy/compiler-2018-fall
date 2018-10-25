@@ -92,9 +92,6 @@ Type::~Type() {
     if (kind == ARRAY) {
         delete array.elem;
         array.elem = nullptr;
-    } else if (kind == STRUCTURE) {
-        structure.name.~string();
-        structure.fields.~vector();
     }
 }
 

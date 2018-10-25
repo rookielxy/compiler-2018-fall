@@ -120,7 +120,9 @@ void AstNode::parseExtDef() {
         auto func = Function(funDec, type, true);
         symTable.defineFunc(func);
         symTable.enterScope(func);
-        compSt->parseCompSt(func.getRetType());
+        auto type = func.getRetType();
+        compSt->parseCompSt(type);
+        delete type;
         symTable.leaveScope();
     } else if (attr == VOID_DEC) {          // ExtDef -> Specifier SEMI
                                             // do nothing
@@ -416,7 +418,8 @@ Type* AstNode::parseExp() {
         AstNode *exp1 = first_child, *exp2 = exp1->first_sibling->first_sibling;
         auto type1 = exp1->parseExp(), type2 = exp2->parseExp();
         if (type1 == nullptr or type2 == nullptr) {
-            delete type1, type2;
+            delete type1;
+            delete type2;
             return nullptr;
         }
 
@@ -424,7 +427,8 @@ Type* AstNode::parseExp() {
             string msg = "\"";
             msg += exp1->str + "\" is not a array";
             reportError(10, msg, exp1->line_no);
-            delete type1, type2;
+            delete type1;delete type2;
+;
             return nullptr; 
         }
 
@@ -432,7 +436,8 @@ Type* AstNode::parseExp() {
             string msg = "\"";
             msg += exp2->str + "\" is not a integer";
             reportError(12, msg, exp2->line_no);
-            delete type1, type2;
+            delete type1;delete type2;
+;
             return nullptr; 
         }
 
@@ -478,7 +483,8 @@ Type* AstNode::parseExp() {
         }
 
         if (type1 == nullptr or type2 == nullptr) {
-            delete type1, type2;
+            delete type1;
+            delete type2;
             type1 = type2 = nullptr;
             return nullptr;
         }
@@ -486,7 +492,8 @@ Type* AstNode::parseExp() {
         if (not (*type1 == *type2)) {
             string msg = "Type mismatched for assignment";
             reportError(5, msg, exp1->line_no);
-            delete type1, type2;
+            delete type1;
+            delete type2;
             type1 = type2 = nullptr;
             return nullptr;
         }
@@ -501,7 +508,8 @@ Type* AstNode::parseExp() {
         auto type1 = exp1->parseExp(),
             type2 = exp2->parseExp();
         if (type1 == nullptr or type2 == nullptr) {
-            delete type1, type2;
+            delete type1;
+            delete type2;
             type1 = type2 = nullptr;
             return nullptr;
         }
@@ -516,7 +524,8 @@ Type* AstNode::parseExp() {
         if (error) {
             string msg = "Type mismatched for operands";
             reportError(7, msg, exp1->line_no);
-            delete type1, type2;
+            delete type1;
+            delete type2;
             type1 = type2 = nullptr;
             return nullptr;
         }

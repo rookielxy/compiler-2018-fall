@@ -24,7 +24,6 @@ Symbol& Symbol::operator=(const Symbol &symbol) {
 }
 
 Symbol::~Symbol() {
-	name.~string(); 
 	delete type; 
 	type = nullptr;
 }
