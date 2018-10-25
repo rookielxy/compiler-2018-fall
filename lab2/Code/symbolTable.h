@@ -30,6 +30,7 @@ public:
     Symbol* findLocalSymbol(const string &name);
     Symbol* findGlobalSymbol(const string &name);
     Function* findFunc(const string &name);
+    void checkFunc();
 };
 
 

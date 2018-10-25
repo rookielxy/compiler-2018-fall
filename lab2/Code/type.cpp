@@ -100,7 +100,7 @@ bool Type::equalStructure(const Type &type) {
 		return false;
 
 	for (int i = 0; i < structure.fields.size(); ++i) {
-		if (not (structure.fields[i].type == type.structure.fields[i].type))
+		if (not (*structure.fields[i].type == *type.structure.fields[i].type))
 			return false;
 	}
 	return true;

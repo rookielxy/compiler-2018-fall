@@ -11,10 +11,8 @@ Function::Function(const Function &func) {
 }
 
 Function::~Function() {
-	name.~string();
 	delete ret;
 	ret = nullptr;
-	args.~vector();
 }
 
 Function& Function::operator=(const Function &func) {

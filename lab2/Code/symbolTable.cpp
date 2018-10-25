@@ -118,3 +118,13 @@ Function* SymbolTable::findFunc(const string &name) {
 	else
 		return nullptr;
 }
+
+void SymbolTable::checkFunc() {
+	for (auto it = decFunc.begin(); it != decFunc.end(); ++it) {
+		if (not it->second.isDef()) {
+			string msg = "Undefined function ";
+			msg += "\"" + it->first + "\"";
+			reportError(18, msg, it->second.getLineNo());
+		}
+	}
+}

@@ -7,6 +7,7 @@ Symbol::Symbol(AstNode *param) {
     while (id->tag == TAG_VAR_DEC)
         id = id->first_child;
     name = id->str;
+    line_no = param->line_no;
     type = specifier->parseSpecifier();
 }
 

@@ -104,6 +104,7 @@ void AstNode::syntaxParse() {
         extDefList = extDef->first_sibling;
         extDef = extDefList->first_child;
     }
+    symTable.checkFunc();
 }
 
 void AstNode::parseExtDef() {
