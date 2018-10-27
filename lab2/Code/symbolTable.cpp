@@ -83,7 +83,7 @@ void SymbolTable::defineFunc(const Function &func) {
 				msg += "\"" + func.getName() + "\"";
 				reportError(19, msg, funcPtr->getLineNo());
 			}
-			decFunc.insert(pair<string, Function>(func.getName(), func));
+			decFunc[func.getName()] = func;
 		}
 	} else {
 		decFunc.emplace(func.getName(), func);

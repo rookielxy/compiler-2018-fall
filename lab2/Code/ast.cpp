@@ -111,26 +111,31 @@ void AstNode::parseExtDef() {
     assert(tag == TAG_EXT_DEF);
     AstNode *specifier = first_child;
     auto type = specifier->parseSpecifier();
-    if (attr == FUNC_DEC) {                 // ExtDef -> Specifier FunDec SEMI
-        AstNode *funDec = specifier->first_sibling;
-        auto func = Function(funDec, type, false);
-        symTable.declareFunc(func);
-    } else if (attr == FUNC_DEF) {          // ExtDef -> Specifier FunDec Compst
-        AstNode *funDec = specifier->first_sibling,
-                *compSt = funDec->first_sibling;
-        auto func = Function(funDec, type, true);
-        symTable.defineFunc(func);
-        symTable.enterScope(func);
-        auto type = func.getRetType();
-        compSt->parseCompSt(type);
-        symTable.leaveScope();
-    } else if (attr == VOID_DEC) {          // ExtDef -> Specifier SEMI
-                                            // do nothing
-    } else if (attr == DEC_LIST) {          // ExtDef -> Specifier ExtDecList SEMI
-        AstNode *extDecList = specifier->first_sibling;
-        extDecList->parseExtDecList(type);
-    } else {
-        assert(false);
+    switch (attr) {
+        case FUNC_DEC: {
+            AstNode *funDec = specifier->first_sibling;
+            auto func = Function(funDec, type, false);
+            symTable.declareFunc(func);
+            break;
+        }
+        case FUNC_DEF: {
+            AstNode *funDec = specifier->first_sibling,
+                    *compSt = funDec->first_sibling;
+            auto func = Function(funDec, type, true);
+            symTable.defineFunc(func);
+            symTable.enterScope(func);
+            auto type = func.getRetType();
+            compSt->parseCompSt(type);
+            symTable.leaveScope();
+            break;
+        }
+        case VOID_DEC: break;
+        case DEC_LIST: {
+            AstNode *extDecList = specifier->first_sibling;
+            extDecList->parseExtDecList(type);
+            break;
+        }
+        default: assert(false);    
     }
 }
 
@@ -146,9 +151,9 @@ Type AstNode::parseSpecifier() {
             msg += "\"" + name + "\".";                 // define variable
             reportError(17, msg, line_no);              // return empty Type;
             return Type();
-        } else {
+        } else
             return Type(*ptr);
-        }
+        
     } else {
         auto type = Type(this);                     // else branch reached if: 
         if (not type.isBasic() and                     // 1. Specifier -> TYPE 
@@ -268,222 +273,243 @@ void AstNode::parseCompSt(const Type &retType) {
 
 void AstNode::parseStmt(const Type &retType) {
     assert(tag == TAG_STMT);
-    if (attr == EXP_STMT) {
-        first_child->parseExp();
-    } else if (attr == COMPST_STMT) {
-        symTable.enterScope();
-        first_child->parseCompSt(retType);
-        symTable.leaveScope();
-    } else if (attr == RETURN_STMT) {
-        AstNode *exp = first_child->first_sibling;
-        auto type = exp->parseExp();
-        if (not (type == retType)) {
-            string msg = "Type mismatched for return";
-            reportError(8, msg, exp->line_no);
+    switch (attr) {
+        case EXP_STMT:
+            first_child->parseExp();
+            break;
+        case COMPST_STMT:
+            symTable.enterScope();
+            first_child->parseCompSt(retType);
+            symTable.leaveScope();
+            break;
+        case RETURN_STMT: {
+            AstNode *exp = first_child->first_sibling;
+            auto type = exp->parseExp();
+            if (not (type == retType)) {
+                string msg = "Type mismatched for return";
+                reportError(8, msg, exp->line_no);
+            }
+            break;
         }
-    } else if (attr == IF_STMT or attr == WHILE_STMT) {
-        AstNode *exp = first_child->first_sibling->first_sibling,
-                *stmt = exp->first_sibling->first_sibling;
-        exp->parseExp();
-        stmt->parseStmt(retType);
-    } else if (attr == IF_ELSE_STMT) {
-        AstNode *exp = first_child->first_sibling->first_sibling,
-                *stmt1 = exp->first_sibling->first_sibling,
-                *stmt2 = stmt1->first_sibling->first_sibling;
-        exp->parseExp();
-        stmt1->parseStmt(retType);
-        stmt2->parseStmt(retType);
-    } else {
-        assert(false);
+        case IF_STMT: case WHILE_STMT: {
+            AstNode *exp = first_child->first_sibling->first_sibling,
+                    *stmt = exp->first_sibling->first_sibling;
+            exp->parseExp();
+            stmt->parseStmt(retType);
+            break;            
+        }
+        case IF_ELSE_STMT: {
+            AstNode *exp = first_child->first_sibling->first_sibling,
+                    *stmt1 = exp->first_sibling->first_sibling,
+                    *stmt2 = stmt1->first_sibling->first_sibling;
+            exp->parseExp();
+            stmt1->parseStmt(retType);
+            stmt2->parseStmt(retType);            
+        }
+        default: assert(false);
     }
 }
 
 Type AstNode::parseExp() {
     assert(tag == TAG_EXP);
-    if (attr == INT_EXP) {
-        lval = false;
-        return Type(true);
+    switch(attr) {
+        case INT_EXP: {
+            lval = false;
+            return Type(true);           
+        }
 
-    } else if (attr == FLOAT_EXP) {
-        lval = false;
-        return Type(false);
+        case FLOAT_EXP: {
+            lval = false;
+            return Type(false);
+        }
 
-    } else if (attr == ID_EXP) {
-        lval = true;
-        AstNode *id = first_child;
-        assert(id->tag == TAG_ID);
-        auto ptr = symTable.findGlobalSymbol(id->str);
-        if (ptr == nullptr) {
-            string msg = "Undefined variable ";
-            msg += "\"" + id->str + "\"";
-            reportError(1, msg, id->line_no);
-            return Type(nullptr);
-        } else
-            return ptr->getType();
-
-    } else if (attr == FUNC_EMPTY_EXP or attr == FUNC_ARGS_EXP) {
-        lval = false;
-        AstNode *id = first_child;
-        assert(id->tag == TAG_ID);
-        auto ptr = symTable.findFunc(id->str);
-        if (ptr == nullptr) {
-            if (symTable.findGlobalSymbol(id->str) == nullptr) {
-                string msg = "Undefined function ";
+        case ID_EXP: {
+            lval = true;
+            AstNode *id = first_child;
+            assert(id->tag == TAG_ID);
+            auto ptr = symTable.findGlobalSymbol(id->str);
+            if (ptr == nullptr) {
+                string msg = "Undefined variable ";
                 msg += "\"" + id->str + "\"";
-                reportError(2, msg, id->line_no);
+                reportError(1, msg, id->line_no);
+                return Type(nullptr);
+            } else
+                return ptr->getType();
+        }
+
+        case FUNC_EMPTY_EXP: case FUNC_ARGS_EXP: {
+            lval = false;
+            AstNode *id = first_child;
+            assert(id->tag == TAG_ID);
+            auto ptr = symTable.findFunc(id->str);
+            if (ptr == nullptr) {
+                if (symTable.findGlobalSymbol(id->str) == nullptr) {
+                    string msg = "Undefined function ";
+                    msg += "\"" + id->str + "\"";
+                    reportError(2, msg, id->line_no);
+
+                } else {
+                    string msg = "\"";
+                    msg += id->str + "\" is not a function";
+                    reportError(11, msg, id->line_no); 
+                }
+                return Type(nullptr);
 
             } else {
-                string msg = "\"";
-                msg += id->str + "\" is not a function";
-                reportError(11, msg, id->line_no); 
-            }
-            return Type(nullptr);
-
-        } else {
-            vector<Type> types1 = ptr->getArgsType(), types2;
-            if (attr == FUNC_ARGS_EXP) {
-                AstNode *args = id->first_sibling->first_sibling;
-                types2 = args->parseArgs();
-            }
-            bool applicable = true;
-            if (types1.size() != types2.size())
-                applicable = false;
-            else {
-                for (int i = 0; i < types1.size(); ++i) {
-                    if (not (types1[i] == types2[i])) {
-                        applicable = false;
-                        break;
+                vector<Type> types1 = ptr->getArgsType(), types2;
+                if (attr == FUNC_ARGS_EXP) {
+                    AstNode *args = id->first_sibling->first_sibling;
+                    types2 = args->parseArgs();
+                }
+                bool applicable = true;
+                if (types1.size() != types2.size())
+                    applicable = false;
+                else {
+                    for (int i = 0; i < types1.size(); ++i) {
+                        if (not (types1[i] == types2[i])) {
+                            applicable = false;
+                            break;
+                        }
                     }
                 }
+
+                if (not applicable) {
+                    string msg = "Function ";
+                    msg += "\"" + ptr->getName() + ptr->getArgsName() + "\"";
+                    msg += " is not applicable for arguments " + transferArgsToName(types2);
+                    reportError(9, msg, id->line_no);
+                    return Type(nullptr);
+                }    
+            }
+            return ptr->getRetType();
+        }
+
+        case STRUCT_EXP: {
+            lval = true;
+            AstNode *exp = first_child, *id = exp->first_sibling->first_sibling;
+            auto type = exp->parseExp();
+            if (type.isError())        // already encountered error
+                return Type(nullptr);         // simply return
+
+            if (not type.isStruct()) {
+                string msg = "Illegal use of \".\"";
+                reportError(13, msg, exp->line_no);
+                return Type(nullptr);
             }
 
-            if (not applicable) {
-                string msg = "Function ";
-                msg += "\"" + ptr->getName() + ptr->getArgsName() + "\"";
-                msg += " is not applicable for arguments " + transferArgsToName(types2);
-                reportError(9, msg, id->line_no);
+            auto field = type.findField(id->str);
+            if (field == nullptr) {
+                string msg = "Non-existent field ";
+                msg += "\"" + id->str + "\"";
+                reportError(14, msg, exp->line_no);
                 return Type(nullptr);
-            }    
-        }
-        return ptr->getRetType();
-
-    } else if (attr == STRUCT_EXP) {
-        lval = true;
-        AstNode *exp = first_child, *id = exp->first_sibling->first_sibling;
-        auto type = exp->parseExp();
-        if (type.isError())        // already encountered error
-            return Type(nullptr);         // simply return
-
-        if (not type.isStruct()) {
-            string msg = "Illegal use of \".\"";
-            reportError(13, msg, exp->line_no);
-            return Type(nullptr);
+            }
+            
+            auto fieldType = field->getType();
+            return fieldType;
         }
 
-        auto field = type.findField(id->str);
-        if (field == nullptr) {
-            string msg = "Non-existent field ";
-            msg += "\"" + id->str + "\"";
-            reportError(14, msg, exp->line_no);
-            return Type(nullptr);
-        }
-        
-        auto fieldType = field->getType();
-        return fieldType;
+        case ARRAY_EXP: {
+            lval = true;
+            AstNode *exp1 = first_child, *exp2 = exp1->first_sibling->first_sibling;
+            auto type1 = exp1->parseExp(), type2 = exp2->parseExp();
+            if (type1.isError() or type2.isError()) 
+                return Type(nullptr);
 
-    } else if (attr == ARRAY_EXP) {
-        lval = true;
-        AstNode *exp1 = first_child, *exp2 = exp1->first_sibling->first_sibling;
-        auto type1 = exp1->parseExp(), type2 = exp2->parseExp();
-        if (type1.isError() or type2.isError()) 
-            return Type(nullptr);
+            if (not type1.isArray()) {
+                string msg = "\"";
+                msg += exp1->str + "\" is not a array";
+                reportError(10, msg, exp1->line_no);
+                return Type(nullptr); 
+            }
 
-        if (not type1.isArray()) {
-            string msg = "\"";
-            msg += exp1->str + "\" is not a array";
-            reportError(10, msg, exp1->line_no);
-            return Type(nullptr); 
-        }
+            if (not type2.isInt()) {
+                string msg = "\"";
+                msg += exp2->str + "\" is not a integer";
+                reportError(12, msg, exp2->line_no);
+                return Type(nullptr); 
+            }
 
-        if (not type2.isInt()) {
-            string msg = "\"";
-            msg += exp2->str + "\" is not a integer";
-            reportError(12, msg, exp2->line_no);
-            return Type(nullptr); 
+            return type1.arrayElemType();
         }
 
-        return type1.arrayElemType();
-
-    } else if (attr == NEST_EXP) {
-        AstNode *exp = first_child->first_sibling;
-        lval = exp->lval;
-        auto type = exp->parseExp();
-        if (type.isError())
-            return Type(nullptr);
-        else
-            return type;
-
-    } else if (attr == NEG_EXP or attr == NOT_EXP) {
-        lval = false;
-        AstNode *exp = first_child->first_sibling;
-        auto type = exp->parseExp();
-        if (type.isError())
-            return Type(nullptr);
-        bool error1 = (attr == NOT_EXP) and (not type.isInt()),
-            error2 = (attr == NEG_EXP) and (not type.isBasic());
-        if (error1 or error2) {
-            string msg = "Type mismatched for operands";
-            reportError(7, msg, exp->line_no);
-        }
-        return type;
-    } else if (attr == ASSIGN_EXP) {
-        lval = false;
-        AstNode *exp1 = first_child, 
-                *exp2 = exp1->first_sibling->first_sibling;
-
-        auto type1 = exp1->parseExp(),
-            type2 = exp2->parseExp();
-
-        if (not exp1->lval) {
-            string msg = "The left-hand side of an assignment must be a variable";
-            reportError(6, msg, exp1->line_no);
-            return Type(nullptr);
+        case NEST_EXP: {
+            AstNode *exp = first_child->first_sibling;
+            lval = exp->lval;
+            auto type = exp->parseExp();
+            if (type.isError())
+                return Type(nullptr);
+            else
+                return type;            
         }
 
-        if (type1.isError() or type2.isError()) 
-            return Type(nullptr);
-        
-
-        if (not (type1 == type2)) {
-            string msg = "Type mismatched for assignment";
-            reportError(5, msg, exp1->line_no);
-            return Type(nullptr);
+        case NEG_EXP: case NOT_EXP: {
+            lval = false;
+            AstNode *exp = first_child->first_sibling;
+            auto type = exp->parseExp();
+            if (type.isError())
+                return Type(nullptr);
+            bool error1 = (attr == NOT_EXP) and (not type.isInt()),
+                error2 = (attr == NEG_EXP) and (not type.isBasic());
+            if (error1 or error2) {
+                string msg = "Type mismatched for operands";
+                reportError(7, msg, exp->line_no);
+            }
+            return type;            
         }
 
-        return type1;
-    } else {
-        lval = false;
-        AstNode *exp1 = first_child, 
-                *exp2 = exp1->first_sibling->first_sibling;
-        auto type1 = exp1->parseExp(),
-            type2 = exp2->parseExp();
-        if (type1.isError() or type2.isError()) 
-            return Type(nullptr);
-        
+        case ASSIGN_EXP: {
+            lval = false;
+            AstNode *exp1 = first_child, 
+                    *exp2 = exp1->first_sibling->first_sibling;
 
-        bool error;
-        if (attr == AND_EXP or attr == OR_EXP or attr == REL_EXP)
-            error = not (type1.isInt() and type2.isInt());
-        else 
-            error = not ((type1.isInt() and type2.isInt()) or 
-                        (type1.isFloat() and type2.isFloat()));
+            auto type1 = exp1->parseExp(),
+                type2 = exp2->parseExp();
 
-        if (error) {
-            string msg = "Type mismatched for operands";
-            reportError(7, msg, exp1->line_no);
-            return Type(nullptr);
+            if (not exp1->lval) {
+                string msg = "The left-hand side of an assignment must be a variable";
+                reportError(6, msg, exp1->line_no);
+                return Type(nullptr);
+            }
+
+            if (type1.isError() or type2.isError()) 
+                return Type(nullptr);
+            
+
+            if (not (type1 == type2)) {
+                string msg = "Type mismatched for assignment";
+                reportError(5, msg, exp1->line_no);
+                return Type(nullptr);
+            }
+
+            return type1;            
         }
-        return type1;
+
+        case AND_EXP: case OR_EXP: case REL_EXP:
+        case PLUS_EXP: case MINUS_EXP: case STAR_EXP: case DIV_EXP: {
+            lval = false;
+            AstNode *exp1 = first_child, 
+                    *exp2 = exp1->first_sibling->first_sibling;
+            auto type1 = exp1->parseExp(),
+                type2 = exp2->parseExp();
+            if (type1.isError() or type2.isError()) 
+                return Type(nullptr);
+            
+            bool error;
+            if (attr == AND_EXP or attr == OR_EXP or attr == REL_EXP)
+                error = not (type1.isInt() and type2.isInt());
+            else 
+                error = not ((type1.isInt() and type2.isInt()) or 
+                            (type1.isFloat() and type2.isFloat()));
+
+            if (error) {
+                string msg = "Type mismatched for operands";
+                reportError(7, msg, exp1->line_no);
+                return Type(nullptr);
+            }
+            return type1;       
+        } 
+        default: assert(false);
     }
 }
 

@@ -11,6 +11,7 @@ class Function {
     bool def;
     int line_no;
 public:
+    Function() = default;
 	Function(const Function &func) = default;
 	~Function() = default;
 	Function& operator=(const Function &func) = default;
