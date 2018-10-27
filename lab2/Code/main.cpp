@@ -29,6 +29,7 @@ int main(int argc , char **argv) {
 	yyparse();
 /*	if (syntaxCorrect)
 		astRoot->travesalAst(0);*/
-	astRoot->syntaxParse();
+	if (syntaxCorrect)
+		astRoot->syntaxParse();
 	return 0;
 }
