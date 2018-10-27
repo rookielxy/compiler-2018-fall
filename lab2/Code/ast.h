@@ -58,14 +58,14 @@ public:
     void travesalAst(int);
     void syntaxParse();
     void parseExtDef();
-    Type* parseSpecifier();
-    void parseExtDecList(Type *type);
+    Type parseSpecifier();
+    void parseExtDecList(const Type &type);
     vector<Symbol> parseDefList(bool assign);
     vector<Symbol> parseVarList();
-    void parseDecList(vector<Symbol> &symbol, Type *type, bool assign);
-    void parseCompSt(Type *retType);
-    void parseStmt(Type *retType);
-    Type* parseExp();
+    void parseDecList(vector<Symbol> &symbol, const Type &type, bool assign);
+    void parseCompSt(const Type &retType);
+    void parseStmt(const Type &retType);
+    Type parseExp();
     vector<Type> parseArgs();
 };
 

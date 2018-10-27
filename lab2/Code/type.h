@@ -7,7 +7,7 @@ class Symbol;
 class AstNode;
 
 class Type {
-    enum {BASIC, ARRAY, STRUCTURE} kind;
+    enum {BASIC, ARRAY, STRUCTURE, ERROR} kind;
     enum {TYPE_INT, TYPE_FLOAT} basic;
     struct {
         Type *elem;
@@ -22,7 +22,8 @@ public:
     Type() = default;
     explicit Type(AstNode *specifier);
     explicit Type(bool integer);
-    Type(AstNode *varDec, Type *type);
+    explicit Type(nullptr_t) { kind = ERROR; }
+    Type(AstNode *varDec, const Type &type);
 
     Type(const Type &type);
     Type& operator=(const Type &type);
@@ -31,6 +32,7 @@ public:
     bool isBasic() const { return kind == BASIC; }
     bool isStruct() const { return kind == STRUCTURE; }
     bool isArray() const { return kind == ARRAY; }
+    bool isError() const {return kind == ERROR; }
     bool isInt() const { return kind == BASIC and basic == TYPE_INT; }
     bool isFloat() const { return kind == BASIC and basic == TYPE_FLOAT; }
     string getStructName() const { return structure.name; }
@@ -42,7 +44,7 @@ public:
     bool operator==(const Type &type);
 
     Symbol* findField(const string &fieldName);
-    Type* arrayElemType() const { return new Type(*array.elem); }
+    Type arrayElemType() const { return *array.elem; }
 
     friend string transferArgsToName(const vector<Type> &args);
 };

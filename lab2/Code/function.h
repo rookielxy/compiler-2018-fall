@@ -6,16 +6,16 @@
 
 class Function {
 	string name;
-    Type *ret;
+    Type ret;
     vector<Symbol> args;
     bool def;
     int line_no;
 public:
-	Function(const Function &func);
-	~Function();
-	Function& operator=(const Function &func);
+	Function(const Function &func) = default;
+	~Function() = default;
+	Function& operator=(const Function &func) = default;
 
-	Function(AstNode *funDec, Type *type, bool def);
+	Function(AstNode *funDec, const Type &type, bool def);
     string getName() const { return name; }
     bool isDef() const { return def; }
     bool operator==(const Function &func);
@@ -23,7 +23,7 @@ public:
     vector<Symbol> getArgs() const { return args; }
     vector<Type> getArgsType() const;
     string getArgsName() const;
-    Type *getRetType() const { return new Type(*ret); }
+    Type getRetType() const { return ret; }
 };
 
 #endif

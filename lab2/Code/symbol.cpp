@@ -11,33 +11,14 @@ Symbol::Symbol(AstNode *param) {
     type = specifier->parseSpecifier();
 }
 
-Symbol::Symbol(const Symbol &symbol) {
-	name = symbol.name;
-	line_no = symbol.line_no;
-	type = new Type(*symbol.type);
-}
-
-Symbol& Symbol::operator=(const Symbol &symbol) {
-	name = symbol.name;
-	line_no = symbol.line_no;
-	type = new Type(*symbol.type);
-	return *this;
-}
-
-Symbol::~Symbol() {
-	delete type; 
-	type = nullptr;
-}
-
-
-Symbol::Symbol(AstNode *varDec, Type *type) {
+Symbol::Symbol(AstNode *varDec, const Type &type) {
 	AstNode *child = varDec->first_child;
 	assert(child->tag == TAG_ID or child->tag == TAG_VAR_DEC);
 	
 	if (child->tag == TAG_ID)
-		this->type = new Type(*type);
+		this->type = type;
 	else
-		this->type = new Type(varDec, type);
+		this->type = Type(varDec, type);
 	while (child->tag == TAG_VAR_DEC)
 		child = child->first_child;
 
