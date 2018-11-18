@@ -153,7 +153,7 @@ string Type::getTypeName() const {
 
 int Type::getTypeSize() {
     if (kind == BASIC)
-        return basic == TYPE_INT? 4 : 8;
+        return 4;
     else if (kind == ARRAY)
         return array.size*array.elem->getTypeSize();
     else {

@@ -29,11 +29,12 @@ int main(int argc , char **argv) {
 #endif
 	yyparse();
 /*	if (syntaxCorrect)
-		astRoot->travesalAst(0);*/
+		astRoot->travesalAst(0);
 	if (syntaxCorrect)
 		astRoot->syntaxParse();
 	if (semanticCorrect)
 		printf("Semantic correct\n");
+ */
 
 	fclose(f);
 	return 0;

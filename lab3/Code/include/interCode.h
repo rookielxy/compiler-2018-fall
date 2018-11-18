@@ -32,32 +32,76 @@ protected:
 	enum operandType kind;
 	union {
 		int value;
-		int tempIdx;
-		int labelIdx;
 	};
 	Symbol *symbol;
 public:
+	Operand() = default;
+	Operand(int value);
+	Operand(Symbol *symbol);
 };
 
 class Temp : public Operand {
 	static vector<Temp *> temps;
+	int tempIdx;
 public:
-	Temp();
+	Temp() {
+		kind = OP_TEMP;
+		tempIdx = temps.size();
+		symbol = nullptr;
+		temps.emplace_back(this);
+	}
 };
 
 class Label : public Operand {
 	static int counter;
+	int labelIdx;
 public:
-	Label();
+	Label() {
+		kind = OP_LABEL;
+		labelIdx = counter;
+		++counter;
+		symbol = nullptr;	
+	}
+};
+
+class ConstOp : public Operand {
+	int value;
+public:
+	explicit ConstOp(int value) {
+		kind = OP_CONST;
+		this->value = value;
+	}	
+};
+
+class SymbolOp : public Operand {
+	Symbol *symbol;
+public:
+	explicit SymbolOp(Symbol *symbol) {
+		kind = OP_VARIABLE;
+		this->symbol = symbol;
+	}
+};
+
+class FuncOp : public Operand {
+	Function *func;
+public:
+	explicit FuncOp(Function *func) {
+		kind = OP_FUNC;
+		this->func = func;
+	}	
 };
 
 class InterCode {
 	enum interCodeType kind;
 	Operand *op1, *op2, *result;
 public:
-	InterCode(nullptr_t ptr): kind(IR_EMPTY), 
-							op1(nullptr), op2(nullptr), result(nullptr) {}
-	bool isEmpty() { return kind == IR_EMPTY; }
+	InterCode() = default;
+	InterCode(enum interCodeType kind, Operand *op): 
+				kind(kind), op1(op) {}
+	
+	InterCode(enum interCodeType kind, Operand *op1, Operand *op2): 
+				kind(kind), op1(op1), op2(op2) {}
+	
 };
 
 #endif
