@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "symbolTable.h"
+#include "interCode.h"
 
 enum Tag {
     TAG_PROGRAM, TAG_EXT_DEF_LIST, TAG_EXT_DEF,
@@ -56,6 +57,7 @@ public:
     AstNode(enum Tag, int, ...);
     void extraInfo(enum Tag, char *yytext);
     void travesalAst(int);
+
     void syntaxParse();
     void parseExtDef();
     Type parseSpecifier();
@@ -67,9 +69,16 @@ public:
     void parseStmt(const Type &retType);
     Type parseExp();
     vector<Type> parseArgs();
+
+    void translate();
+    list<InterCode> translateProgram();
+    list<InterCode> translateExtDef();
+    list<InterCode> translateCompSt();
+    list<InterCode> translateExtDecList();
 };
 
 extern string DICT[];
 extern AstNode *astRoot;
+extern bool semanticCorrect;
 
 #endif

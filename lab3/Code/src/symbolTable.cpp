@@ -2,6 +2,7 @@
 #include "ast.h"
 
 void reportError(int type, string msg, int line_no) {
+	semanticCorrect = false;
     cout << "Error type " << type << " at Line "
         << line_no << ": " << msg << endl;
 }

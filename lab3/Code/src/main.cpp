@@ -3,6 +3,7 @@
 extern FILE* yyin;
 extern int yylval;
 bool syntaxCorrect = true;
+bool semanticCorrect = true;
 
 #ifdef YY_DEBUG
 extern int yydebug;
@@ -31,5 +32,9 @@ int main(int argc , char **argv) {
 		astRoot->travesalAst(0);*/
 	if (syntaxCorrect)
 		astRoot->syntaxParse();
+	if (semanticCorrect)
+		printf("Semantic correct\n");
+
+	fclose(f);
 	return 0;
 }

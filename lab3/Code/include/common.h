@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <list>
 #include <map>
 #include <algorithm>
 #include <string>
@@ -12,6 +13,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cassert>
+#include <cstddef>
 
 // #define LEX_DEBUG
 // #define YY_DEBUG
