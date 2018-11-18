@@ -46,6 +46,8 @@ public:
     Symbol* findField(const string &fieldName);
     Type arrayElemType() const { return *array.elem; }
 
+    int getTypeSize();
+
     friend string transferArgsToName(const vector<Type> &args);
 };
 

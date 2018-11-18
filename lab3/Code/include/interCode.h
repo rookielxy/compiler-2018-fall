@@ -10,6 +10,8 @@ enum operandType {
 };
 
 enum interCodeType {
+	IR_EMPTY,
+
 	IR_FUNC, IR_LABEL, IP_ASSIGN,
 	IR_ADD, IR_SUB, IR_MUL, IR_DIV,
 
@@ -17,6 +19,8 @@ enum interCodeType {
 	IR_RELOP_EQ, IR_RELOP_NEQ,
 	IR_RELOP_GT, IR_RELOP_LT,
 	IR_RELOP_GE, IR_RELOP_LE,
+
+	IR_ADDR, IR_LSTAR, IR_RSTAR,
 	
 	IR_CALL, IR_PARAM, IR_DEC,
 
@@ -50,6 +54,10 @@ public:
 class InterCode {
 	enum interCodeType kind;
 	Operand *op1, *op2, *result;
+public:
+	InterCode(nullptr_t ptr): kind(IR_EMPTY), 
+							op1(nullptr), op2(nullptr), result(nullptr) {}
+	bool isEmpty() { return kind == IR_EMPTY; }
 };
 
 #endif

@@ -151,6 +151,19 @@ string Type::getTypeName() const {
     } 
 }
 
+int Type::getTypeSize() {
+    if (kind == BASIC)
+        return basic == TYPE_INT? 4 : 8;
+    else if (kind == ARRAY)
+        return array.size*array.elem->getTypeSize();
+    else {
+        int ret = 0;
+        for (auto &ele : structure.fields)
+            ret += ele.getType().getTypeSize();
+        return ret;
+    }
+}
+
 string transferArgsToName(const vector<Type> &argTypes) {
     if (argTypes.empty())
         return "()";

@@ -46,6 +46,7 @@ list<InterCode> AstNode::translateExtDef() {
 
 list<InterCode> AstNode::translateCompSt() {
 	assert(tag == TAG_COMPST);
+
 }
 
 list<InterCode> AstNode::translateExtDecList() {
@@ -53,6 +54,21 @@ list<InterCode> AstNode::translateExtDecList() {
 	AstNode *extDecList = this, *varDec = first_child;
 	list<InterCode> ret;
 	while (varDec->first_sibling != nullptr) {
-		
+		InterCode ic = varDec->translateVarDec();
+		if (not ic.isEmpty())
+			ret.emplace_back(ic);
+		extDecList = varDec->first_sibling->first_sibling;
+		varDec = extDecList->first_child;	
 	}
+	return ret;
+}
+
+InterCode AstNode::translateVarDec() {
+	assert(tag == TAG_VAR_DEC);
+	AstNode *id = first_child;
+	Symbol *symbol = symTable.findGlobalSymbol(id->str);
+	Type type = symbol->getType();
+	if (type.isBasic())
+		return InterCode(nullptr);
+	
 }

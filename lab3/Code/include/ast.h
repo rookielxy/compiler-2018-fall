@@ -75,6 +75,7 @@ public:
     list<InterCode> translateExtDef();
     list<InterCode> translateCompSt();
     list<InterCode> translateExtDecList();
+    InterCode translateVarDec();
 };
 
 extern string DICT[];
