@@ -96,13 +96,9 @@ class InterCode {
 	Operand *op1, *op2, *result;
 public:
 	InterCode() = default;
-	InterCode(enum interCodeType kind, Operand *op): 
-				kind(kind), op1(op) {}
-	
-	InterCode(enum interCodeType kind, Operand *op1, Operand *op2): 
-				kind(kind), op1(op1), op2(op2) {}
-	InterCode(enum interCodeType kind, Operand *op1, Operand *op2, Operand *result):
-				kind(kind), op1(op1), op2(op2), result(result) {}
+	InterCode(enum interCodeType kind, Operand *op);
+	InterCode(enum interCodeType kind, Operand *op1, Operand *op2);
+	InterCode(enum interCodeType kind, Operand *op1, Operand *op2, Operand *result);
 	enum interCodeType getType() { return kind; }
 	Operand* getResult();
 };

@@ -174,6 +174,36 @@ CodeBlock AstNode::translateDec() {
 
 CodeBlock AstNode::translateExp() {
 	assert(tag = TAG_EXP);
+	CodeBlock code;
+	switch (attr) {
+		case ASSIGN_EXP: case AND_EXP: case OR_EXP:
+		case PLUS_EXP: case MINUS_EXP: case STAR_EXP: 
+		case DIV_EXP: {
+			AstNode *expr1 = first_child,
+					*expr2 = expr1->first_sibling->first_sibling;
+			CodeBlock code1 = expr1->translateExp(),
+					code2 = expr2->translateExp();
+			Operand *x = code1.getResult(),
+					*y = code2.getResult();
+			code.append(code1);
+			code.append(code2);
+			enum interCodeType type;
+			switch (attr) {
+				case ASSIGN_EXP: type = IR_ASSIGN; break;
+				case PLUS_EXP: type = IR_ADD; break;
+				case MINUS_EXP: type = IR_SUB; break;
+				case STAR_EXP: type = IR_MUL; break;
+				case DIV_EXP: type = IR_DIV; break;
+				case NOT_EXP: case AND_EXP: case OR_EXP:
+				default: assert(false);
+			}
+			code.append(InterCode(type, x, y));
+		}
+		break;
+		case REL_EXP:
+		default: assert(false);
+	}
+	return code;
 }
 
 CodeBlock AstNode::translateCond() {
