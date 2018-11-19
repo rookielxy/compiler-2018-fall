@@ -95,3 +95,35 @@ void AstNode::travesalAst(int indent) {
         child = child->first_sibling;
     }
 }
+
+enum interCodeType AstNode::relopType() {
+    enum interCodeType relopType;
+    if (str == "==")
+        relopType == IR_RELOP_EQ;
+    else if (str == "!=")
+        relopType == IR_RELOP_NEQ;
+    else if (str == ">")
+        relopType == IR_RELOP_GT;
+    else if (str == "<")
+        relopType == IR_RELOP_LT;
+    else if (str == ">=")
+        relopType == IR_RELOP_GE;
+    else if (str == "<=")
+        relopType == IR_RELOP_LE;
+    else
+        assert(false);
+    return relopType;
+}
+
+enum interCodeType relopTypeReverse(enum interCodeType relopType) {
+        switch (relopType) {
+        case IR_RELOP_EQ: relopType = IR_RELOP_NEQ; break;
+        case IR_RELOP_NEQ: relopType = IR_RELOP_EQ; break;
+        case IR_RELOP_GT: relopType = IR_RELOP_LE; break;
+        case IR_RELOP_LT: relopType = IR_RELOP_GE; break;
+        case IR_RELOP_GE: relopType = IR_RELOP_LT; break;
+        case IR_RELOP_LE: relopType = IR_RELOP_GT; break;
+        default: assert(false);
+    }
+    return relopType;
+}

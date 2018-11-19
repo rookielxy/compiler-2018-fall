@@ -71,19 +71,26 @@ public:
     vector<Type> parseArgs();
 
     void translate();
-    list<InterCode> translateProgram();
-    list<InterCode> translateExtDef();
-    list<InterCode> translateCompSt();
-    list<InterCode> translateExtDecList();
-    list<InterCode> translateVarDec();
-    list<InterCode> translateDefList();
-    list<InterCode> translateStmtList();
-    list<InterCode> translateDef();
-    list<InterCode> translateDec();
+    CodeBlock translateProgram();
+    CodeBlock translateExtDef();
+    CodeBlock translateCompSt();
+    CodeBlock translateExtDecList();
+    InterCode translateVarDec();
+    CodeBlock translateDefList();
+    CodeBlock translateStmtList();
+    CodeBlock translateDef();
+    CodeBlock translateDec();
+    CodeBlock translateExp();
+    CodeBlock translateStmt();
+    CodeBlock translateCond();
+    
+    enum interCodeType relopType();
 };
 
 extern string DICT[];
 extern AstNode *astRoot;
 extern bool semanticCorrect;
+
+enum interCodeType relopTypeReverse(enum interCodeType relopType);
 
 #endif

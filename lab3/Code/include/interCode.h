@@ -12,7 +12,7 @@ enum operandType {
 enum interCodeType {
 	IR_EMPTY,
 
-	IR_FUNC, IR_LABEL, IP_ASSIGN,
+	IR_FUNC, IR_LABEL, IR_ASSIGN,
 	IR_ADD, IR_SUB, IR_MUL, IR_DIV,
 
 	IR_GOTO, IR_RETURN, 
@@ -22,7 +22,7 @@ enum interCodeType {
 
 	IR_ADDR, IR_LSTAR, IR_RSTAR,
 	
-	IR_CALL, IR_PARAM, IR_DEC,
+	IR_CALL, IR_PARAM, IR_DEC, IR_BASIC_DEC,
 
 	IR_READ, IR_WRITE
 };
@@ -101,7 +101,19 @@ public:
 	
 	InterCode(enum interCodeType kind, Operand *op1, Operand *op2): 
 				kind(kind), op1(op1), op2(op2) {}
-	
+	InterCode(enum interCodeType kind, Operand *op1, Operand *op2, Operand *result):
+				kind(kind), op1(op1), op2(op2), result(result) {}
+	enum interCodeType getType() { return kind; }
+	Operand* getResult();
+};
+
+class CodeBlock {
+	list<InterCode> code;
+public:
+	CodeBlock() = default;
+	void append(CodeBlock toAdd);
+	void append(const InterCode &toAdd);
+	Operand* getResult();
 };
 
 #endif
