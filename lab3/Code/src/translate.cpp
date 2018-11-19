@@ -125,6 +125,7 @@ CodeBlock AstNode::translateStmt() {
 		case IF_STMT: case IF_ELSE_STMT:
 			return translateCond();
 		case WHILE_STMT:
+			return translateLoop();
 		default: assert(false);
 	}
 }
@@ -183,6 +184,7 @@ CodeBlock AstNode::translateCond() {
 			*expr1 = expr->first_child,
 			*relop = expr1->first_sibling,
 			*expr2 = relop->first_sibling;
+	assert(expr->attr == REL_EXP);
 	CodeBlock code1 = expr1->translateExp(),
 			code2 = expr2->translateExp();
 	code.append(code1);
@@ -192,7 +194,6 @@ CodeBlock AstNode::translateCond() {
 
 	AstNode *stmt = expr->first_sibling->first_sibling;
 	CodeBlock stmtCode = stmt->translateStmt();
-
 
 	switch(attr) {
 		case IF_STMT: {
@@ -224,3 +225,35 @@ CodeBlock AstNode::translateCond() {
 	return code;
 }
 
+CodeBlock AstNode::translateLoop() {
+	assert(tag == TAG_STMT);
+	assert(attr == WHILE_STMT);
+	CodeBlock code;
+	AstNode *expr = first_child->first_sibling->first_sibling,
+			*expr1 = expr->first_child,
+			*relop = expr1->first_sibling,
+			*expr2 = relop->first_sibling;
+	assert(expr->attr == REL_EXP);
+	CodeBlock code1 = expr1->translateExp(),
+			code2 = expr2->translateExp();
+	Operand *x = code1.getResult(),
+			*y = code2.getResult();
+	enum interCodeType relopType = relop->relopType();
+
+	auto begin = new Label();
+	auto end = new Label();
+
+	AstNode *stmt = expr->first_sibling->first_sibling;
+	CodeBlock stmtCode = stmt->translateStmt();
+
+	code.append(InterCode(IR_LABEL, begin));
+	code.append(code1);
+	code.append(code2);
+	relopType = relopTypeReverse(relopType);
+	InterCode ifCode = InterCode(relopType, x, y, end);
+	code.append(ifCode);
+	code.append(stmtCode);
+	code.append(InterCode(IR_GOTO, begin));
+
+	return code;
+}
