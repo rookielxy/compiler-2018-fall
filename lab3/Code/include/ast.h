@@ -83,6 +83,7 @@ public:
     CodeBlock translateExp();
     CodeBlock translateStmt();
     CodeBlock translateCond();
+    CodeBlock translateLoop();
     
     enum interCodeType relopType();
 };

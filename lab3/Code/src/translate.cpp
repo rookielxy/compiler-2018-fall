@@ -122,31 +122,10 @@ CodeBlock AstNode::translateStmt() {
 			expCode.append(retCode);
 			return expCode;
 		}
-		case IF_STMT: {
-			CodeBlock ret;
-			AstNode *expr = first_child->first_sibling->first_sibling,
-					*stmt = expr->first_sibling->first_sibling;
-			assert(expr->attr == REL_EXP);
-			AstNode *exp1 = expr->first_child, 
-					*relop = exp1->first_sibling,
-					*exp2 = relop->first_sibling;
-			CodeBlock code1 = exp1->translateExp(),
-					code2 = exp2->translateExp();
-			
-			enum interCodeType relopType = relop->relopType();
-			relopType = relopTypeReverse(relopType);
-
-			ret.append(code1);
-			ret.append(code2);
-			Operand *x = code1.getResult(), *y = code2.getResult();
-			Label *label = new Label();
-			InterCode ifCode = InterCode(relopType, x, y, label);
-			ret.append(ifCode);
-			ret.append(stmt->translateStmt());
-			InterCode labelCode = InterCode(IR_LABEL, label);
-			ret.append(labelCode);
-			return ret;
-		}
+		case IF_STMT: case IF_ELSE_STMT:
+			return translateCond();
+		case WHILE_STMT:
+		default: assert(false);
 	}
 }
 
@@ -194,5 +173,54 @@ CodeBlock AstNode::translateDec() {
 
 CodeBlock AstNode::translateExp() {
 	assert(tag = TAG_EXP);
+}
+
+CodeBlock AstNode::translateCond() {
+	assert(tag == TAG_STMT);
+	assert(attr == IF_STMT or attr == IF_ELSE_STMT);
+	CodeBlock code;
+	AstNode *expr = first_child->first_sibling->first_sibling,
+			*expr1 = expr->first_child,
+			*relop = expr1->first_sibling,
+			*expr2 = relop->first_sibling;
+	CodeBlock code1 = expr1->translateExp(),
+			code2 = expr2->translateExp();
+	code.append(code1);
+	code.append(code2);
+	Operand *x = code1.getResult(), *y = code2.getResult();
+	enum interCodeType relopType = relop->relopType();
+
+	AstNode *stmt = expr->first_sibling->first_sibling;
+	CodeBlock stmtCode = stmt->translateStmt();
+
+
+	switch(attr) {
+		case IF_STMT: {
+			relopType = relopTypeReverse(relopType);
+			auto label = new Label();
+			InterCode ifCode = InterCode(relopType, x, y, label);
+			code.append(ifCode);
+			code.append(stmtCode);
+			code.append(InterCode(IR_LABEL, label));
+		}
+		break;
+		case IF_ELSE_STMT: {
+			AstNode *elseStmt = stmt->first_sibling->first_sibling;
+			CodeBlock elseCode = elseStmt->translateStmt();
+			
+			auto label1 = new Label();
+			auto label2 = new Label();
+			InterCode ifCode = InterCode(relopType, x, y, label1);
+			code.append(ifCode);
+			code.append(elseCode);
+			code.append(InterCode(IR_GOTO, label2));
+			code.append(InterCode(IR_LABEL, label1));
+			code.append(stmtCode);
+			code.append(InterCode(IR_LABEL, label2));
+		}
+		break;
+		default: assert(false);
+	}
+	return code;
 }
 
