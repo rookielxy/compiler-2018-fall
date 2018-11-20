@@ -282,12 +282,26 @@ CodeBlock AstNode::translateCondExp(Label *labelTrue, Label *labelFalse) {
 			
 			switch (attr) {
 				case AND_EXP:
-					code.append(expr1->translateCondExp(nullptr, labelFalse));
-					code.append(expr2->translateCondExp(labelTrue, labelFalse));
+					if (labelFalse != nullptr) {
+						code.append(expr1->translateCondExp(nullptr, labelFalse));
+						code.append(expr2->translateCondExp(labelTrue, labelFalse));
+					} else {
+						Label *label = new Label();
+						code.append(expr1->translateCondExp(nullptr, label));
+						code.append(expr2->translateCondExp(labelTrue, nullptr));
+						code.append(InterCode(IR_LABEL, label));
+					}
 					break;
 				case OR_EXP:
-					code.append(expr1->translateCondExp(labelTrue, nullptr));
-					code.append(expr2->translateCondExp(labelTrue, labelFalse));
+					if (labelTrue != nullptr) {
+						code.append(expr1->translateCondExp(labelTrue, nullptr));
+						code.append(expr2->translateCondExp(labelTrue, labelFalse));
+					} else {
+						Label *label = new Label();
+						code.append(expr1->translateCondExp(label, nullptr));
+						code.append(expr2->translateCondExp(nullptr, labelFalse));
+						code.append(InterCode(IR_LABEL, label));
+					}
 					break;
 				default: assert(false);
 			}
