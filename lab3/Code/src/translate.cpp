@@ -176,8 +176,7 @@ CodeBlock AstNode::translateExp() {
 	assert(tag = TAG_EXP);
 	CodeBlock code;
 	switch (attr) {
-		case ASSIGN_EXP:  case PLUS_EXP: case MINUS_EXP:
-		case STAR_EXP: case DIV_EXP: {
+		case ASSIGN_EXP: {
 			AstNode *expr1 = first_child,
 					*expr2 = expr1->first_sibling->first_sibling;
 			CodeBlock code1 = expr1->translateExp(),
@@ -186,6 +185,37 @@ CodeBlock AstNode::translateExp() {
 					*y = code2.getResult();
 			code.append(code1);
 			code.append(code2);
+			if (expr2->attr != ID_EXP or expr2->lval) {
+				code.append(InterCode(IR_RSTAR, y));
+				y = code.getResult();
+			}
+
+			if (expr1->attr != ID_EXP or expr2->lval)
+				code.append(InterCode(IR_LSTAR, x, y));
+			else
+				code.append(InterCode(IR_ASSIGN, x, y));
+		}
+		break;
+		case PLUS_EXP: case MINUS_EXP:
+		case STAR_EXP: case DIV_EXP: {
+			AstNode *expr1 = first_child,
+					*expr2 = expr1->first_sibling->first_sibling;
+			CodeBlock code1 = expr1->translateExp(),
+					code2 = expr2->translateExp();
+			Operand *x = code1.getResult(),
+					*y = code2.getResult();
+			code.append(code1);
+			if (expr1->attr != ID_EXP and expr1->lval) {
+				code.append(InterCode(IR_RSTAR, x));
+				x = code.getResult();
+			}
+
+			code.append(code2);
+			if (expr2->attr != ID_EXP and expr2->lval) {
+				code.append(InterCode(IR_RSTAR, y));
+				y = code.getResult();
+			}
+
 			enum interCodeType type;
 			switch (attr) {
 				case ASSIGN_EXP: type = IR_ASSIGN; break;
@@ -242,13 +272,23 @@ CodeBlock AstNode::translateExp() {
 			Type type = expr->parseExp();
 			auto offset = new ConstOp(type.getFieldOffset(id->str));
 			code.append(InterCode(IR_ADD, x, offset));
-			Symbol *symbol = type.findField(id->str);
-			assert(symbol == nullptr);
-			if (symbol->getType().isBasic()) {
-				InterCode ref = InterCode();
-			}
 		}
 		break;
+		case ARRAY_EXP: {
+			AstNode *expr1 = first_child,
+					*expr2 = expr1->first_sibling->first_sibling;
+			CodeBlock code1 = expr1->translateExp(),
+					code2 = expr2->translateExp();
+			Operand *x = code1.getResult(), *y = code2.getResult();
+			code.append(code1);
+			code.append(code2);
+
+			Type type = expr1->parseExp();
+			auto eleSz = new ConstOp(type.arrayElemType().getTypeSize());
+			InterCode offset = InterCode(IR_MUL, y, eleSz);
+			code.append(offset);
+			code.append(InterCode(IR_ADD, x, offset.getResult()));
+		}
 		case REL_EXP: case NOT_EXP: 
 		case AND_EXP: case OR_EXP:
 		case FLOAT_EXP:
