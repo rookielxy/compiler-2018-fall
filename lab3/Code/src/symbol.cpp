@@ -9,6 +9,7 @@ Symbol::Symbol(AstNode *param) {
     name = id->str;
     line_no = param->line_no;
     type = specifier->parseSpecifier();
+	offset = 0;
 }
 
 Symbol::Symbol(AstNode *varDec, const Type &type) {

@@ -8,6 +8,7 @@ Type::Type(AstNode *specifier) {
 
     if (child->tag == TAG_TYPE) {                              
         kind = BASIC;               // Specifier -> Type
+        size = 4;
         if (child->str == "int")
             basic = TYPE_INT;
         else if (child->str == "float")
@@ -26,6 +27,12 @@ Type::Type(AstNode *specifier) {
                 structure.name = "anonymous";           // anonymous structure
 
             structure.fields = defList->parseDefList(false);      // assign not permitted in fields definition
+            int offset = 0;
+            for (auto &ele : structure.fields) {
+                ele.offset = offset;
+                offset += ele.type.getTypeSize();
+            }
+            size = offset;
         } else {
             assert(false);                              // only declaration cannot 
                                                         // construct a type
@@ -37,6 +44,7 @@ Type::Type(AstNode *specifier) {
 
 Type::Type(bool integer) {
     kind = BASIC;
+    size = 4;
     if (integer)
         basic = TYPE_INT;
     else
@@ -54,6 +62,7 @@ Type::Type(AstNode *varDec, const Type &type) {
         AstNode *size = varDec->first_sibling->first_sibling;
         array.size = size->ival;
         array.elem = new Type(varDec, type);
+        this->size = array.size*array.elem->getTypeSize();
     }
 }
 
@@ -151,19 +160,6 @@ string Type::getTypeName() const {
     } 
 }
 
-int Type::getTypeSize() {
-    if (kind == BASIC)
-        return 4;
-    else if (kind == ARRAY)
-        return array.size*array.elem->getTypeSize();
-    else {
-        int ret = 0;
-        for (auto &ele : structure.fields)
-            ret += ele.getType().getTypeSize();
-        return ret;
-    }
-}
-
 string transferArgsToName(const vector<Type> &argTypes) {
     if (argTypes.empty())
         return "()";
@@ -181,4 +177,11 @@ Symbol* Type::findField(const string &fieldName) {
             return &ele;
     }
     return nullptr;
+}
+
+int Type::getFieldOffset(const string &filedName) {
+    Symbol *symbol = findField(filedName);
+    if (symbol == nullptr)
+        assert(false);
+    return symbol->offset;
 }

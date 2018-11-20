@@ -18,6 +18,7 @@ class Type {
         vector<Symbol> fields;
     } structure;
     int line_no;
+    int size;
 public:
     Type() = default;
     explicit Type(AstNode *specifier);
@@ -44,9 +45,10 @@ public:
     bool operator==(const Type &type);
 
     Symbol* findField(const string &fieldName);
+    int getFieldOffset(const string &fieldName);
     Type arrayElemType() const { return *array.elem; }
 
-    int getTypeSize();
+    int getTypeSize() { return size; }
 
     friend string transferArgsToName(const vector<Type> &args);
 };

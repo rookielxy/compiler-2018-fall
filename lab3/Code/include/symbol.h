@@ -10,6 +10,7 @@ class Symbol {
     string name;
     Type type;
     int line_no;
+    int offset;
 public:
 	explicit Symbol(AstNode *param);
     Symbol(AstNode *varDec, const Type &type);

@@ -223,8 +223,30 @@ CodeBlock AstNode::translateExp() {
 		case ID_EXP: {
 			AstNode *id = first_child;
 			Symbol *symbol = symTable.findGlobalSymbol(id->str);
-			InterCode line = InterCode(IR_EMPTY, new SymbolOp(symbol));
+			auto symOp = new SymbolOp(symbol);
+			InterCode line = InterCode(IR_EMPTY, symOp);
 			code.append(line);
+			if (not symbol->getType().isBasic()) {
+				InterCode addr = InterCode(IR_ADDR, new Temp(), symOp);
+				code.append(addr);
+			}
+		}
+		break;
+		case STRUCT_EXP: {
+			AstNode *expr = first_child, 
+					*id = expr->first_sibling->first_sibling;
+			CodeBlock code1 = expr->translateExp();
+			Operand *x = code1.getResult();
+			code.append(code1);
+
+			Type type = expr->parseExp();
+			auto offset = new ConstOp(type.getFieldOffset(id->str));
+			code.append(InterCode(IR_ADD, x, offset));
+			Symbol *symbol = type.findField(id->str);
+			assert(symbol == nullptr);
+			if (symbol->getType().isBasic()) {
+				InterCode ref = InterCode();
+			}
 		}
 		break;
 		case REL_EXP: case NOT_EXP: 
