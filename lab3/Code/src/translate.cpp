@@ -176,9 +176,8 @@ CodeBlock AstNode::translateExp() {
 	assert(tag = TAG_EXP);
 	CodeBlock code;
 	switch (attr) {
-		case ASSIGN_EXP: case AND_EXP: case OR_EXP:
-		case PLUS_EXP: case MINUS_EXP: case STAR_EXP: 
-		case DIV_EXP: {
+		case ASSIGN_EXP:  case PLUS_EXP: case MINUS_EXP:
+		case STAR_EXP: case DIV_EXP: {
 			AstNode *expr1 = first_child,
 					*expr2 = expr1->first_sibling->first_sibling;
 			CodeBlock code1 = expr1->translateExp(),
@@ -194,13 +193,43 @@ CodeBlock AstNode::translateExp() {
 				case MINUS_EXP: type = IR_SUB; break;
 				case STAR_EXP: type = IR_MUL; break;
 				case DIV_EXP: type = IR_DIV; break;
-				case NOT_EXP: case AND_EXP: case OR_EXP:
 				default: assert(false);
 			}
 			code.append(InterCode(type, x, y));
 		}
 		break;
-		case REL_EXP:
+		case NEG_EXP: {
+			AstNode *expr = first_child->first_sibling;
+			CodeBlock code1 = expr->translateExp();
+			Operand *x = code1.getResult();
+			auto zero = new ConstOp(0);
+			
+			code.append(code1);
+			code.append(InterCode(IR_SUB, zero, x));
+		}
+		break;
+		case NEST_EXP: {
+			AstNode *expr = first_child->first_sibling;
+			CodeBlock code1 = expr->translateExp();
+			code.append(code1);
+		}
+		break;
+		case INT_EXP: {
+			AstNode *intNode = first_child;
+			InterCode line = InterCode(IR_EMPTY, new ConstOp(intNode->ival));
+			code.append(line);
+		}
+		break;
+		case ID_EXP: {
+			AstNode *id = first_child;
+			Symbol *symbol = symTable.findGlobalSymbol(id->str);
+			InterCode line = InterCode(IR_EMPTY, new SymbolOp(symbol));
+			code.append(line);
+		}
+		break;
+		case REL_EXP: case NOT_EXP: 
+		case AND_EXP: case OR_EXP:
+		case FLOAT_EXP:
 		default: assert(false);
 	}
 	return code;
