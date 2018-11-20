@@ -123,7 +123,7 @@ CodeBlock AstNode::translateStmt() {
 			return expCode;
 		}
 		case IF_STMT: case IF_ELSE_STMT:
-			return translateCond();
+			return translateCondStmt();
 		case WHILE_STMT:
 			return translateLoop();
 		default: assert(false);
@@ -206,7 +206,7 @@ CodeBlock AstNode::translateExp() {
 	return code;
 }
 
-CodeBlock AstNode::translateCond() {
+CodeBlock AstNode::translateCondStmt() {
 	assert(tag == TAG_STMT);
 	assert(attr == IF_STMT or attr == IF_ELSE_STMT);
 	CodeBlock code;
@@ -248,6 +248,66 @@ CodeBlock AstNode::translateCond() {
 			code.append(InterCode(IR_LABEL, label1));
 			code.append(stmtCode);
 			code.append(InterCode(IR_LABEL, label2));
+		}
+		break;
+		default: assert(false);
+	}
+	return code;
+}
+
+CodeBlock AstNode::translateCondExp(Label *labelTrue, Label *labelFalse) {
+	assert(tag == TAG_EXP);
+	assert(attr == REL_EXP or attr == NOT_EXP
+			or attr == AND_EXP or attr == OR_EXP);
+	assert(labelTrue == nullptr and labelFalse == nullptr);
+			
+	CodeBlock code;
+	switch (attr) {
+		case REL_EXP: {
+			AstNode *expr1 = first_child,
+					*relop = expr1->first_sibling,
+					*expr2 = relop->first_sibling;
+
+			CodeBlock code1 = expr1->translateExp(),
+					code2 = expr2->translateExp();
+			Operand *x = code1.getResult(), *y = code2.getResult();
+			code.append(code1);
+			code.append(code2);
+
+			enum interCodeType relopType = relop->relopType();
+
+			if (labelTrue == nullptr) {
+				relopType = relopTypeReverse(relopType);
+				code.append(InterCode(relopType, x, y, labelFalse));
+			} else if (labelFalse == nullptr) {
+				code.append(InterCode(relopType, x, y, labelTrue));
+			} else {
+				code.append(InterCode(relopType, x, y, labelTrue));
+				code.append(InterCode(IR_GOTO, labelFalse));
+			}
+		}
+		break;
+		case AND_EXP: case OR_EXP: {
+			AstNode *expr1 = first_child,
+					*binop = expr1->first_sibling,
+					*expr2 = binop->first_sibling;
+			
+			switch (attr) {
+				case AND_EXP:
+					code.append(expr1->translateCondExp(nullptr, labelFalse));
+					code.append(expr2->translateCondExp(labelTrue, labelFalse));
+					break;
+				case OR_EXP:
+					code.append(expr1->translateCondExp(labelTrue, nullptr));
+					code.append(expr2->translateCondExp(labelTrue, labelFalse));
+					break;
+				default: assert(false);
+			}
+		}
+		break;
+		case NOT_EXP: {
+			AstNode *expr = first_child->first_sibling;
+			code.append(expr->translateCondExp(labelFalse, labelFalse));
 		}
 		break;
 		default: assert(false);
