@@ -7,14 +7,19 @@ InterCode::InterCode(enum interCodeType kind, Operand *op):
 			kind(kind), op1(op), op2(nullptr), result(nullptr) {
 	switch (kind) {
 		case IR_ADD: case IR_SUB: case IR_MUL: case IR_DIV:
-		case IR_RSTAR:
+		case IR_RSTAR: case IR_ADDR:
 			result = new Temp();
+			break;
+		case IR_LSTAR: case IR_ASSIGN: 
+		case IR_DEC: case IR_BASIC_DEC:
+			result = op1;
 			break;
 		case IR_RELOP_EQ: case IR_RELOP_NEQ:
 		case IR_RELOP_GE: case IR_RELOP_LE:
 		case IR_RELOP_GT: case IR_RELOP_LT:
 		case IR_GOTO: case IR_LABEL: case IR_FUNC: 
-		case IR_RETURN:					// these kinds of intermediate codes have no result
+		case IR_RETURN:
+			break;
 		default: assert(false);
 	}
 }
@@ -41,7 +46,53 @@ InterCode::InterCode(enum interCodeType kind, Operand *op1, Operand *op2, Operan
 }
 
 Operand* InterCode::getResult() {
-	
+	if (result == nullptr)
+		assert(false);
+	return result;
+}
+
+void InterCode::display() {
+	switch (kind) {
+		case IR_EMPTY: case IR_BASIC_DEC: break;
+		case IR_FUNC: case IR_LABEL:
+			cout << op1->display() << endl;
+			break;
+		case IR_ASSIGN:
+			cout << result->display() << " := "
+				<< op2->display() << endl;
+			break;
+		case IR_ADD: case IR_SUB: case IR_MUL: case IR_DIV:
+			cout << result->display() << " := "
+				<< op1->display();
+			switch (kind) {
+				case IR_ADD: cout << " + "; break;
+				case IR_SUB: cout << " - "; break;
+				case IR_MUL: cout << " * "; break;
+				case IR_DIV: cout << " / "; break;
+				default: assert(false);
+			}
+			cout << op2->display() << endl;
+		case IR_GOTO:
+			cout << "GOTO " << op1->display() << endl;
+			break;
+		case IR_ADDR:
+			cout << result->display() << " := &"
+				<< op1->display() << endl;
+			break;
+		case IR_LSTAR:
+			cout << "*" << result->display() << " := "
+				<< op2->display() << endl;
+			break;
+		case IR_RSTAR:
+			cout << result->display() << " := "
+				<< "*" << op1->display() << endl;
+			break;
+		case IR_DEC:
+			cout << "DEC " << result->display() << " "
+				<< to_string(((ConstOp *)op2)->getValue()) << endl;
+			break;
+		default: assert(false);
+	}
 }
 
 void CodeBlock::append(CodeBlock toAdd) {
@@ -54,4 +105,9 @@ void CodeBlock::append(const InterCode &toAdd) {
 
 Operand* CodeBlock::getResult() {
 	return code.back().getResult();
+}
+
+void CodeBlock::display() {
+	for (auto &ele : code)
+		ele.display();
 }

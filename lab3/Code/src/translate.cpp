@@ -2,6 +2,8 @@
 
 void AstNode::translate() {
 	assert(tag == TAG_PROGRAM);
+	CodeBlock code = translateProgram();
+	code.display();
 }
 
 CodeBlock AstNode::translateProgram() {
@@ -30,7 +32,11 @@ CodeBlock AstNode::translateExtDef() {
 		break;
 		case VOID_DEC: break;
 		case FUNC_DEF: {
-			AstNode *compSt = first_child->first_sibling->first_sibling;
+			AstNode *funDec = first_child->first_sibling, 
+				*compSt = funDec->first_sibling,
+				*funId = funDec->first_child;
+			Function *func = symTable.findFunc(funId->str);
+			ret.append(InterCode(IR_FUNC, new FuncOp(func)));
 			CodeBlock toAdd = compSt->translateCompSt();
 			ret.append(toAdd);
 		}
@@ -71,6 +77,7 @@ InterCode AstNode::translateVarDec() {
 	assert(tag == TAG_VAR_DEC);
 	AstNode *id = first_child;
 	Symbol *symbol = symTable.findGlobalSymbol(id->str);
+	assert(symbol == nullptr);
 	Type type = symbol->getType();
 	if (not type.isBasic()) {
 		assert(type.isArray() or type.isStruct());
@@ -257,7 +264,7 @@ CodeBlock AstNode::translateExp() {
 			InterCode line = InterCode(IR_EMPTY, symOp);
 			code.append(line);
 			if (not symbol->getType().isBasic()) {
-				InterCode addr = InterCode(IR_ADDR, new Temp(), symOp);
+				InterCode addr = InterCode(IR_ADDR, symOp);
 				code.append(addr);
 			}
 		}
@@ -289,6 +296,8 @@ CodeBlock AstNode::translateExp() {
 			code.append(offset);
 			code.append(InterCode(IR_ADD, x, offset.getResult()));
 		}
+		case FUNC_EMPTY_EXP:
+		case FUNC_ARGS_EXP:
 		case REL_EXP: case NOT_EXP: 
 		case AND_EXP: case OR_EXP:
 		case FLOAT_EXP:

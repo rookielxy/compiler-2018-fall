@@ -28,11 +28,8 @@ int main(int argc , char **argv) {
 	yydebug = 1;
 #endif
 	yyparse();
-	if (syntaxCorrect)
-		astRoot->travesalAst(0);
-	if (syntaxCorrect)
-		astRoot->syntaxParse();
-
+	astRoot->syntaxParse();
+	astRoot->translate();
 	fclose(f);
 	return 0;
 }

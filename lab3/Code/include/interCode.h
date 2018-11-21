@@ -30,14 +30,9 @@ enum interCodeType {
 class Operand {
 protected:
 	enum operandType kind;
-	union {
-		int value;
-	};
-	Symbol *symbol;
 public:
 	Operand() = default;
-	Operand(int value);
-	Operand(Symbol *symbol);
+	virtual string display() = 0;
 };
 
 class Temp : public Operand {
@@ -47,8 +42,11 @@ public:
 	Temp() {
 		kind = OP_TEMP;
 		tempIdx = temps.size();
-		symbol = nullptr;
 		temps.emplace_back(this);
+	}
+
+	string display() {
+		return "t" + to_string(tempIdx);
 	}
 };
 
@@ -59,8 +57,11 @@ public:
 	Label() {
 		kind = OP_LABEL;
 		labelIdx = counter;
-		++counter;
-		symbol = nullptr;	
+		++counter;	
+	}
+
+	string display() { 
+		return "LABEL " + to_string(labelIdx) + " :"; 
 	}
 };
 
@@ -70,7 +71,13 @@ public:
 	explicit ConstOp(int value) {
 		kind = OP_CONST;
 		this->value = value;
-	}	
+	}
+
+	string display() {
+		return "#" + to_string(value);
+	}
+
+	int getValue() { return value; }
 };
 
 class SymbolOp : public Operand {
@@ -80,6 +87,10 @@ public:
 		kind = OP_VARIABLE;
 		this->symbol = symbol;
 	}
+
+	string display() {
+		return symbol->getName();
+	}
 };
 
 class FuncOp : public Operand {
@@ -88,7 +99,11 @@ public:
 	explicit FuncOp(Function *func) {
 		kind = OP_FUNC;
 		this->func = func;
-	}	
+	}
+
+	string display() {
+		return "FUNCTION " + func->getName() + " :";
+	}
 };
 
 class InterCode {
@@ -101,6 +116,7 @@ public:
 	InterCode(enum interCodeType kind, Operand *op1, Operand *op2, Operand *result);
 	enum interCodeType getType() { return kind; }
 	Operand* getResult();
+	void display();
 };
 
 class CodeBlock {
@@ -110,6 +126,7 @@ public:
 	void append(CodeBlock toAdd);
 	void append(const InterCode &toAdd);
 	Operand* getResult();
+	void display();
 };
 
 #endif
