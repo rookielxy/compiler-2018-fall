@@ -77,7 +77,7 @@ void AstNode::parseExtDecList(const Type &type) {
     }
 }
 
-vector<Symbol> AstNode::parseDefList(bool assign) {
+vector<Symbol> AstNode::parseDefList(bool outer) {
     assert(tag == TAG_DEF_LIST or tag == TAG_EMPTY);
     vector<Symbol> result;
     if (tag == TAG_EMPTY)
@@ -88,7 +88,7 @@ vector<Symbol> AstNode::parseDefList(bool assign) {
                 *decList = specifier->first_sibling;
 
         auto type = specifier->parseSpecifier();
-        decList->parseDecList(result, type, assign);
+        decList->parseDecList(result, type, outer);
 
         defList = def->first_sibling;
         def = defList->first_child;
@@ -96,7 +96,7 @@ vector<Symbol> AstNode::parseDefList(bool assign) {
     return result;
 }
 
-void AstNode::parseDecList(vector<Symbol> &symbols, const Type &type, bool assign) {
+void AstNode::parseDecList(vector<Symbol> &symbols, const Type &type, bool outer) {
     assert(tag == TAG_DEC_LIST);
     AstNode *decList = this, *dec = first_child;
     while (true) {
@@ -106,8 +106,8 @@ void AstNode::parseDecList(vector<Symbol> &symbols, const Type &type, bool assig
         varDec->type = new Type(symbol.getType());
         varDec->str = symbol.getName();
 
-        if (assign) {
-            symbols.emplace_back(symbol);
+        if (outer) {
+            symTable.defineSymbol(symbol);
             if (dec->attr == ASSIGN_DEC) {
                 AstNode *expr = varDec->first_sibling->first_sibling;
                 expr->parseExp();
@@ -166,9 +166,7 @@ void AstNode::parseCompSt(const Type &retType) {
     AstNode *defList = first_child->first_sibling,
             *stmtList = defList->first_sibling,
             *stmt = stmtList->first_child;
-    vector<Symbol> symbols = defList->parseDefList(true);
-    for (auto ele: symbols)
-        symTable.defineSymbol(ele);
+    defList->parseDefList(true);
 
     while(stmtList->tag != TAG_EMPTY) {
         stmt->parseStmt(retType);

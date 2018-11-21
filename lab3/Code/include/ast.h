@@ -64,9 +64,9 @@ public:
     void parseExtDef();
     Type parseSpecifier();
     void parseExtDecList(const Type &type);
-    vector<Symbol> parseDefList(bool assign);
+    vector<Symbol> parseDefList(bool outer);
     vector<Symbol> parseVarList();
-    void parseDecList(vector<Symbol> &symbol, const Type &type, bool assign);
+    void parseDecList(vector<Symbol> &symbol, const Type &type, bool outer);
     void parseCompSt(const Type &retType);
     void parseStmt(const Type &retType);
     void parseExp();
