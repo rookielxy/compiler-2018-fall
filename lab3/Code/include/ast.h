@@ -52,7 +52,9 @@ public:
     };
     int line_no;
     enum Attr attr;
+
     bool lval;
+    Type *type;
     
     AstNode(enum Tag, int, ...);
     void extraInfo(enum Tag, char *yytext);
@@ -67,7 +69,7 @@ public:
     void parseDecList(vector<Symbol> &symbol, const Type &type, bool assign);
     void parseCompSt(const Type &retType);
     void parseStmt(const Type &retType);
-    Type parseExp();
+    void parseExp();
     vector<Type> parseArgs();
 
     void translate();

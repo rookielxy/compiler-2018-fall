@@ -107,9 +107,9 @@ void AstNode::parseDecList(vector<Symbol> &symbols, const Type &type, bool assig
         if (assign) {
             symbols.emplace_back(symbol);
             if (dec->attr == ASSIGN_DEC) {
-                AstNode *exp = varDec->first_sibling->first_sibling;
-                auto temp = exp->parseExp();
-                if (not (temp == type)) {
+                AstNode *expr = varDec->first_sibling->first_sibling;
+                expr->parseExp();
+                if (not (*expr->type == type)) {
                     string msg = "Type mismatched for assignment";
                     reportError(5, msg, varDec->line_no);
                 }
@@ -187,26 +187,26 @@ void AstNode::parseStmt(const Type &retType) {
             symTable.leaveScope();
             break;
         case RETURN_STMT: {
-            AstNode *exp = first_child->first_sibling;
-            auto type = exp->parseExp();
-            if (not (type == retType)) {
+            AstNode *expr = first_child->first_sibling;
+            expr->parseExp();
+            if (not (*expr->type == retType)) {
                 string msg = "Type mismatched for return";
-                reportError(8, msg, exp->line_no);
+                reportError(8, msg, expr->line_no);
             }
             break;
         }
         case IF_STMT: case WHILE_STMT: {
-            AstNode *exp = first_child->first_sibling->first_sibling,
-                    *stmt = exp->first_sibling->first_sibling;
-            exp->parseExp();
+            AstNode *expr = first_child->first_sibling->first_sibling,
+                    *stmt = expr->first_sibling->first_sibling;
+            expr->parseExp();
             stmt->parseStmt(retType);
             break;            
         }
         case IF_ELSE_STMT: {
-            AstNode *exp = first_child->first_sibling->first_sibling,
-                    *stmt1 = exp->first_sibling->first_sibling,
+            AstNode *expr = first_child->first_sibling->first_sibling,
+                    *stmt1 = expr->first_sibling->first_sibling,
                     *stmt2 = stmt1->first_sibling->first_sibling;
-            exp->parseExp();
+            expr->parseExp();
             stmt1->parseStmt(retType);
             stmt2->parseStmt(retType);            
         }
@@ -214,17 +214,19 @@ void AstNode::parseStmt(const Type &retType) {
     }
 }
 
-Type AstNode::parseExp() {
+void AstNode::parseExp() {
     assert(tag == TAG_EXP);
     switch(attr) {
         case INT_EXP: {
             lval = false;
-            return Type(true);           
+            type = new Type(true);
+            return;        
         }
 
         case FLOAT_EXP: {
             lval = false;
-            return Type(false);
+            type = new Type(false);
+            return;
         }
 
         case ID_EXP: {
@@ -236,9 +238,10 @@ Type AstNode::parseExp() {
                 string msg = "Undefined variable ";
                 msg += "\"" + id->str + "\"";
                 reportError(1, msg, id->line_no);
-                return Type(nullptr);
+                type = nullptr;
             } else
-                return ptr->getType();
+                type = new Type(ptr->getType());
+            return;
         }
 
         case FUNC_EMPTY_EXP: case FUNC_ARGS_EXP: {
@@ -257,7 +260,8 @@ Type AstNode::parseExp() {
                     msg += id->str + "\" is not a function";
                     reportError(11, msg, id->line_no); 
                 }
-                return Type(nullptr);
+                type = nullptr;
+                return;
 
             } else {
                 vector<Type> types1 = ptr->getArgsType(), types2;
@@ -282,84 +286,102 @@ Type AstNode::parseExp() {
                     msg += "\"" + ptr->getName() + ptr->getArgsName() + "\"";
                     msg += " is not applicable for arguments " + transferArgsToName(types2);
                     reportError(9, msg, id->line_no);
-                    return Type(nullptr);
+                    type = nullptr;
+                    return;
                 }    
             }
-            return ptr->getRetType();
+            type = new Type(ptr->getRetType());
+            return;
         }
 
         case STRUCT_EXP: {
             lval = true;
-            AstNode *exp = first_child, *id = exp->first_sibling->first_sibling;
-            auto type = exp->parseExp();
-            if (type.isError())        // already encountered error
-                return Type(nullptr);         // simply return
-
-            if (not type.isStruct()) {
-                string msg = "Illegal use of \".\"";
-                reportError(13, msg, exp->line_no);
-                return Type(nullptr);
+            AstNode *expr = first_child, *id = expr->first_sibling->first_sibling;
+            expr->parseExp();
+            if (expr->type == nullptr) {        // already encountered error
+                type = nullptr;               // simply return
+                return;
             }
 
-            auto field = type.findField(id->str);
+            if (not expr->type->isStruct()) {
+                string msg = "Illegal use of \".\"";
+                reportError(13, msg, expr->line_no);
+                type = nullptr;
+                return;
+            }
+
+            auto field = expr->type->findField(id->str);
             if (field == nullptr) {
                 string msg = "Non-existent field ";
                 msg += "\"" + id->str + "\"";
-                reportError(14, msg, exp->line_no);
-                return Type(nullptr);
+                reportError(14, msg, expr->line_no);
+                type = nullptr;
+                return;
             }
             
-            auto fieldType = field->getType();
-            return fieldType;
+            type = new Type(field->getType());
+            return;
         }
 
         case ARRAY_EXP: {
             lval = true;
             AstNode *exp1 = first_child, *exp2 = exp1->first_sibling->first_sibling;
-            auto type1 = exp1->parseExp(), type2 = exp2->parseExp();
-            if (type1.isError() or type2.isError()) 
-                return Type(nullptr);
+            exp1->parseExp();
+            exp2->parseExp();
+            if (exp1->type == nullptr or exp2->type == nullptr) {
+                type = nullptr;
+                return;
+            }
 
-            if (not type1.isArray()) {
+            if (not exp1->type->isArray()) {
                 string msg = "\"";
                 msg += exp1->str + "\" is not a array";
                 reportError(10, msg, exp1->line_no);
-                return Type(nullptr); 
+                type = nullptr; 
+                return;
             }
 
-            if (not type2.isInt()) {
+            if (not exp2->type->isInt()) {
                 string msg = "\"";
                 msg += exp2->str + "\" is not a integer";
                 reportError(12, msg, exp2->line_no);
-                return Type(nullptr); 
+                type = nullptr;
+                return;
             }
 
-            return type1.arrayElemType();
+            type = new Type(exp1->type->arrayElemType());
+            return;
         }
 
         case NEST_EXP: {
-            AstNode *exp = first_child->first_sibling;
-            lval = exp->lval;
-            auto type = exp->parseExp();
-            if (type.isError())
-                return Type(nullptr);
-            else
-                return type;            
+            AstNode *expr = first_child->first_sibling;
+            lval = expr->lval;
+            expr->parseExp();
+            if (expr->type == nullptr) {
+                type = nullptr;
+                return;
+            } else {
+                type = expr->type;
+                return;   
+            }         
         }
 
         case NEG_EXP: case NOT_EXP: {
             lval = false;
-            AstNode *exp = first_child->first_sibling;
-            auto type = exp->parseExp();
-            if (type.isError())
-                return Type(nullptr);
-            bool error1 = (attr == NOT_EXP) and (not type.isInt()),
-                error2 = (attr == NEG_EXP) and (not type.isBasic());
+            AstNode *expr = first_child->first_sibling;
+            expr->parseExp();
+            if (expr->type == nullptr) {
+                type = nullptr;
+                return;
+            }
+            bool error1 = (attr == NOT_EXP) and (not expr->type->isInt()),
+                error2 = (attr == NEG_EXP) and (not expr->type->isBasic());
             if (error1 or error2) {
                 string msg = "Type mismatched for operands";
-                reportError(7, msg, exp->line_no);
+                reportError(7, msg, expr->line_no);
             }
-            return type;            
+            type = expr->type;
+            return ;            
         }
 
         case ASSIGN_EXP: {
@@ -367,26 +389,31 @@ Type AstNode::parseExp() {
             AstNode *exp1 = first_child, 
                     *exp2 = exp1->first_sibling->first_sibling;
 
-            auto type1 = exp1->parseExp(),
-                type2 = exp2->parseExp();
+            exp1->parseExp(),
+            exp2->parseExp();
 
             if (not exp1->lval) {
                 string msg = "The left-hand side of an assignment must be a variable";
                 reportError(6, msg, exp1->line_no);
-                return Type(nullptr);
+                type = nullptr;
+                return;
             }
 
-            if (type1.isError() or type2.isError()) 
-                return Type(nullptr);
+            if (exp1->type == nullptr or exp2->type == nullptr) {
+                type = nullptr;
+                return;
+            }
             
 
-            if (not (type1 == type2)) {
+            if (not (*exp1->type == *exp2->type)) {
                 string msg = "Type mismatched for assignment";
                 reportError(5, msg, exp1->line_no);
-                return Type(nullptr);
+                type = nullptr;
+                return;
             }
 
-            return type1;            
+            type = exp1->type;
+            return;           
         }
 
         case AND_EXP: case OR_EXP: case REL_EXP:
@@ -394,24 +421,28 @@ Type AstNode::parseExp() {
             lval = false;
             AstNode *exp1 = first_child, 
                     *exp2 = exp1->first_sibling->first_sibling;
-            auto type1 = exp1->parseExp(),
-                type2 = exp2->parseExp();
-            if (type1.isError() or type2.isError()) 
-                return Type(nullptr);
+            exp1->parseExp(),
+            exp2->parseExp();
+            if (exp1->type == nullptr or exp2->type == nullptr) { 
+                type = nullptr;
+                return;
+            }
             
             bool error;
             if (attr == AND_EXP or attr == OR_EXP or attr == REL_EXP)
-                error = not (type1.isInt() and type2.isInt());
+                error = not (exp1->type->isInt() and exp2->type->isInt());
             else 
-                error = not ((type1.isInt() and type2.isInt()) or 
-                            (type1.isFloat() and type2.isFloat()));
+                error = not ((exp1->type->isInt() and exp2->type->isInt()) or 
+                            (exp1->type->isFloat() and exp2->type->isFloat()));
 
             if (error) {
                 string msg = "Type mismatched for operands";
                 reportError(7, msg, exp1->line_no);
-                return Type(nullptr);
+                type = nullptr;
+                return;
             }
-            return type1;       
+            type = exp1->type;
+            return;       
         } 
         default: assert(false);
     }
@@ -420,15 +451,15 @@ Type AstNode::parseExp() {
 vector<Type> AstNode::parseArgs() {
     assert(tag == TAG_ARGS);
     vector<Type> types;
-    AstNode *args = this, *exp = first_child;
+    AstNode *args = this, *expr = first_child;
     while (true) {
-        auto temp = exp->parseExp();
-        types.emplace_back(temp);
+        expr->parseExp();
+        types.emplace_back(*expr->type);
 
-        if (exp->first_sibling == nullptr)
+        if (expr->first_sibling == nullptr)
             break;
-        args = exp->first_sibling->first_sibling;
-        exp = args->first_child;
+        args = expr->first_sibling->first_sibling;
+        expr = args->first_child;
     }
     return types;
 }
