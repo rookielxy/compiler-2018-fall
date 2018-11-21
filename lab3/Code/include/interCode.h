@@ -33,13 +33,15 @@ protected:
 public:
 	Operand() = default;
 	virtual string display() = 0;
+	virtual bool isPtr() { return false; }
 };
 
 class Temp : public Operand {
 	static vector<Temp *> temps;
 	int tempIdx;
+	bool ptr;
 public:
-	Temp() {
+	Temp(bool ptr): ptr(ptr) {
 		kind = OP_TEMP;
 		tempIdx = temps.size();
 		temps.emplace_back(this);
@@ -48,6 +50,8 @@ public:
 	string display() {
 		return "t" + to_string(tempIdx);
 	}
+
+	bool isPtr() { return ptr; }
 };
 
 class Label : public Operand {
@@ -81,28 +85,28 @@ public:
 };
 
 class SymbolOp : public Operand {
-	Symbol *symbol;
+	string name;
 public:
-	explicit SymbolOp(Symbol *symbol) {
+	explicit SymbolOp(string name) {
 		kind = OP_VARIABLE;
-		this->symbol = symbol;
+		this->name = name;
 	}
 
 	string display() {
-		return symbol->getName();
+		return name;
 	}
 };
 
 class FuncOp : public Operand {
-	Function *func;
+	string name;
 public:
-	explicit FuncOp(Function *func) {
+	explicit FuncOp(string name) {
 		kind = OP_FUNC;
-		this->func = func;
+		this->name = name;
 	}
 
 	string display() {
-		return "FUNCTION " + func->getName() + " :";
+		return "FUNCTION " + name + " :";
 	}
 };
 

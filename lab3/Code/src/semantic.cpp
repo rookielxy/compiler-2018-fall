@@ -103,6 +103,8 @@ void AstNode::parseDecList(vector<Symbol> &symbols, const Type &type, bool assig
         assert(dec->attr == EMPTY_DEC or dec->attr == ASSIGN_DEC);
         AstNode *varDec = dec->first_child;
         auto symbol = Symbol(varDec, type);
+        varDec->type = new Type(symbol.getType());
+        varDec->str = symbol.getName();
 
         if (assign) {
             symbols.emplace_back(symbol);

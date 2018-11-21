@@ -6,21 +6,21 @@ int Label::counter = 0;
 InterCode::InterCode(enum interCodeType kind, Operand *op): 
 			kind(kind), op1(op), op2(nullptr), result(nullptr) {
 	switch (kind) {
-		case IR_ADD: case IR_SUB: case IR_MUL: case IR_DIV:
-		case IR_RSTAR: case IR_ADDR:
-			result = new Temp();
+		case IR_RSTAR:
+			result = new Temp(false);
+			break;
+		case IR_ADDR:
+			result = new Temp(true);
 			break;
 		case IR_LSTAR: case IR_ASSIGN: 
 		case IR_DEC: case IR_BASIC_DEC:
+		case IR_EMPTY:
 			result = op1;
 			break;
-		case IR_RELOP_EQ: case IR_RELOP_NEQ:
-		case IR_RELOP_GE: case IR_RELOP_LE:
-		case IR_RELOP_GT: case IR_RELOP_LT:
 		case IR_GOTO: case IR_LABEL: case IR_FUNC: 
 		case IR_RETURN:
 			break;
-		default: assert(false);
+		default: cout << kind << endl; assert(false);
 	}
 }
 
@@ -30,7 +30,14 @@ InterCode::InterCode(enum interCodeType kind, Operand *op1, Operand *op2):
 		case IR_DEC: case IR_BASIC_DEC: case IR_ASSIGN:
 			result = op1;
 			break;
-		default: assert(false);
+		case IR_ADD: case IR_SUB: 
+			result = new Temp(op1->isPtr() or op2->isPtr());
+			break;
+		case IR_MUL: case IR_DIV:
+			assert(op1->isPtr() or op2->isPtr());
+			result = new Temp(false);
+			break;
+		default: cout << kind << endl; assert(false);
 	}
 }
 
@@ -46,8 +53,10 @@ InterCode::InterCode(enum interCodeType kind, Operand *op1, Operand *op2, Operan
 }
 
 Operand* InterCode::getResult() {
-	if (result == nullptr)
+	if (result == nullptr) {
+		cout << kind << endl;
 		assert(false);
+	}
 	return result;
 }
 
@@ -72,6 +81,7 @@ void InterCode::display() {
 				default: assert(false);
 			}
 			cout << op2->display() << endl;
+			break;
 		case IR_GOTO:
 			cout << "GOTO " << op1->display() << endl;
 			break;

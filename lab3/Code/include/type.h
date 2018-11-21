@@ -7,7 +7,7 @@ class Symbol;
 class AstNode;
 
 class Type {
-    enum {BASIC, ARRAY, STRUCTURE, ERROR} kind;
+    enum {BASIC, ARRAY, STRUCTURE} kind;
     enum {TYPE_INT, TYPE_FLOAT} basic;
     struct {
         Type *elem;
@@ -23,7 +23,6 @@ public:
     Type() = default;
     explicit Type(AstNode *specifier);
     explicit Type(bool integer);
-    explicit Type(nullptr_t) { kind = ERROR; }
     Type(AstNode *varDec, const Type &type);
 
     Type(const Type &type);
@@ -33,7 +32,6 @@ public:
     bool isBasic() const { return kind == BASIC; }
     bool isStruct() const { return kind == STRUCTURE; }
     bool isArray() const { return kind == ARRAY; }
-    bool isError() const {return kind == ERROR; }
     bool isInt() const { return kind == BASIC and basic == TYPE_INT; }
     bool isFloat() const { return kind == BASIC and basic == TYPE_FLOAT; }
     string getStructName() const { return structure.name; }

@@ -1,5 +1,5 @@
 int main() {
 	int i[10][10];
-	int j[20][20];
+	int j[10][20];
 	i = j;
 }

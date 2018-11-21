@@ -11,7 +11,7 @@ CodeBlock AstNode::translateProgram() {
 	AstNode *extDefList = first_child, 
 			*extDef = extDefList->first_child;
 	CodeBlock ret;
-	while (extDef->tag != TAG_EMPTY) {
+	while (extDefList->tag != TAG_EMPTY) {
 		CodeBlock toAdd = extDef->translateExtDef();
 		ret.append(toAdd);
 		extDefList = extDef->first_sibling;
@@ -35,8 +35,7 @@ CodeBlock AstNode::translateExtDef() {
 			AstNode *funDec = first_child->first_sibling, 
 				*compSt = funDec->first_sibling,
 				*funId = funDec->first_child;
-			Function *func = symTable.findFunc(funId->str);
-			ret.append(InterCode(IR_FUNC, new FuncOp(func)));
+			ret.append(InterCode(IR_FUNC, new FuncOp(funId->str)));
 			CodeBlock toAdd = compSt->translateCompSt();
 			ret.append(toAdd);
 		}
@@ -75,25 +74,21 @@ CodeBlock AstNode::translateExtDecList() {
 
 InterCode AstNode::translateVarDec() {
 	assert(tag == TAG_VAR_DEC);
-	AstNode *id = first_child;
-	Symbol *symbol = symTable.findGlobalSymbol(id->str);
-	assert(symbol != nullptr);
-	Type type = symbol->getType();
-	if (not type.isBasic()) {
-		assert(type.isArray() or type.isStruct());
-		int size = type.getTypeSize();
+	if (not type->isBasic()) {
+		assert(type->isArray() or type->isStruct());
+		int size = type->getTypeSize();
 		auto sz = new ConstOp(size);
-		auto var = new SymbolOp(symbol);
+		auto var = new SymbolOp(str);
 		return InterCode(IR_DEC, var, sz);
 	}
-	return InterCode(IR_BASIC_DEC, new SymbolOp(symbol));
+	return InterCode(IR_BASIC_DEC, new SymbolOp(str));
 }
 
 CodeBlock AstNode::translateDefList() {
 	assert(tag == TAG_DEF_LIST);
 	AstNode *defList = this, *def = first_child;
 	CodeBlock ret;
-	while (def->tag != TAG_EMPTY) {
+	while (defList->tag != TAG_EMPTY) {
 		CodeBlock code = def->translateDef();
 		ret.append(code);
 		defList = def->first_sibling;
@@ -106,7 +101,7 @@ CodeBlock AstNode::translateStmtList() {
 	assert(tag == TAG_STMT_LIST);
 	AstNode *stmtList = this, *stmt = first_child;
 	CodeBlock ret;
-	while (stmt->tag != TAG_EMPTY) {
+	while (stmtList->tag != TAG_EMPTY) {
 		ret.append(stmt->translateStmt());
 		stmtList = stmt->first_sibling;
 		stmt = stmtList->first_child;
@@ -192,12 +187,12 @@ CodeBlock AstNode::translateExp() {
 					*y = code2.getResult();
 			code.append(code1);
 			code.append(code2);
-			if (expr2->attr != ID_EXP or expr2->lval) {
+			if (y->isPtr()) {
 				code.append(InterCode(IR_RSTAR, y));
 				y = code.getResult();
 			}
 
-			if (expr1->attr != ID_EXP or expr2->lval)
+			if (x->isPtr())
 				code.append(InterCode(IR_LSTAR, x, y));
 			else
 				code.append(InterCode(IR_ASSIGN, x, y));
@@ -212,13 +207,13 @@ CodeBlock AstNode::translateExp() {
 			Operand *x = code1.getResult(),
 					*y = code2.getResult();
 			code.append(code1);
-			if (expr1->attr != ID_EXP and expr1->lval) {
+			if (x->isPtr()) {
 				code.append(InterCode(IR_RSTAR, x));
 				x = code.getResult();
 			}
 
 			code.append(code2);
-			if (expr2->attr != ID_EXP and expr2->lval) {
+			if (y->isPtr()) {
 				code.append(InterCode(IR_RSTAR, y));
 				y = code.getResult();
 			}
@@ -259,30 +254,29 @@ CodeBlock AstNode::translateExp() {
 		break;
 		case ID_EXP: {
 			AstNode *id = first_child;
-			Symbol *symbol = symTable.findGlobalSymbol(id->str);
-			auto symOp = new SymbolOp(symbol);
+			auto symOp = new SymbolOp(id->str);
 			InterCode line = InterCode(IR_EMPTY, symOp);
 			code.append(line);
-			if (not symbol->getType().isBasic()) {
+			if (not type->isBasic()) {
 				InterCode addr = InterCode(IR_ADDR, symOp);
 				code.append(addr);
 			}
 		}
 		break;
 		case STRUCT_EXP: {
-/*			AstNode *expr = first_child, 
+			AstNode *expr = first_child, 
 					*id = expr->first_sibling->first_sibling;
 			CodeBlock code1 = expr->translateExp();
 			Operand *x = code1.getResult();
 			code.append(code1);
 
-			Type type = expr->parseExp();
-			auto offset = new ConstOp(type.getFieldOffset(id->str));
-			code.append(InterCode(IR_ADD, x, offset));*/
+			expr->parseExp();
+			auto offset = new ConstOp(expr->type->getFieldOffset(id->str));
+			code.append(InterCode(IR_ADD, x, offset));
 		}
 		break;
 		case ARRAY_EXP: {
-/*			AstNode *expr1 = first_child,
+			AstNode *expr1 = first_child,
 					*expr2 = expr1->first_sibling->first_sibling;
 			CodeBlock code1 = expr1->translateExp(),
 					code2 = expr2->translateExp();
@@ -290,12 +284,13 @@ CodeBlock AstNode::translateExp() {
 			code.append(code1);
 			code.append(code2);
 
-			Type type = expr1->parseExp();
-			auto eleSz = new ConstOp(type.arrayElemType().getTypeSize());
+			expr1->parseExp();
+			auto eleSz = new ConstOp(expr1->type->arrayElemType().getTypeSize());
 			InterCode offset = InterCode(IR_MUL, y, eleSz);
 			code.append(offset);
-			code.append(InterCode(IR_ADD, x, offset.getResult()));*/
+			code.append(InterCode(IR_ADD, x, offset.getResult()));
 		}
+		break;
 		case FUNC_EMPTY_EXP:
 		case FUNC_ARGS_EXP:
 		case REL_EXP: case NOT_EXP: 
