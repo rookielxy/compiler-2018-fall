@@ -68,6 +68,7 @@ Type::Type(AstNode *varDec, const Type &type) {
 
 Type::Type(const Type &type) {
     kind = type.kind;
+    size = type.size;
     line_no = type.line_no;
     if (type.kind == BASIC)
         basic = type.basic;
@@ -83,6 +84,7 @@ Type::Type(const Type &type) {
 
 Type& Type::operator=(const Type &type) {
     kind = type.kind;
+    size = type.size;
     line_no = type.line_no;
     if (type.kind == BASIC)
         basic = type.basic;

@@ -270,7 +270,6 @@ CodeBlock AstNode::translateExp() {
 			Operand *x = code1.getResult();
 			code.append(code1);
 
-			expr->parseExp();
 			auto offset = new ConstOp(expr->type->getFieldOffset(id->str));
 			code.append(InterCode(IR_ADD, x, offset));
 		}
@@ -284,7 +283,6 @@ CodeBlock AstNode::translateExp() {
 			code.append(code1);
 			code.append(code2);
 
-			expr1->parseExp();
 			auto eleSz = new ConstOp(expr1->type->arrayElemType().getTypeSize());
 			InterCode offset = InterCode(IR_MUL, y, eleSz);
 			code.append(offset);

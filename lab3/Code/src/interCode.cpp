@@ -27,14 +27,15 @@ InterCode::InterCode(enum interCodeType kind, Operand *op):
 InterCode::InterCode(enum interCodeType kind, Operand *op1, Operand *op2):
 			kind(kind), op1(op1), op2(op2), result(nullptr) {
 	switch (kind) {
-		case IR_DEC: case IR_BASIC_DEC: case IR_ASSIGN:
+		case IR_DEC: case IR_BASIC_DEC: 
+		case IR_ASSIGN: case IR_LSTAR:
 			result = op1;
 			break;
 		case IR_ADD: case IR_SUB: 
 			result = new Temp(op1->isPtr() or op2->isPtr());
 			break;
 		case IR_MUL: case IR_DIV:
-			assert(op1->isPtr() or op2->isPtr());
+			assert(not (op1->isPtr() and op2->isPtr()));
 			result = new Temp(false);
 			break;
 		default: cout << kind << endl; assert(false);
