@@ -18,6 +18,10 @@ Symbol* Scope::findSymbol(const string &name) {
 SymbolTable::SymbolTable() {
     Scope global;
     scopes.emplace_back(global);
+	vector<Symbol> args;
+	decFunc.emplace("read", Function("read", Type(true), args));
+	args.emplace_back(Symbol("output", Type(true)));
+	decFunc.emplace("write", Function("write", Type(true), args));
 }
 
 void SymbolTable::enterScope() {

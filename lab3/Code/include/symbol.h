@@ -14,6 +14,7 @@ class Symbol {
 public:
 	explicit Symbol(AstNode *param);
     Symbol(AstNode *varDec, const Type &type);
+    Symbol(const string &name, const Type &type): name(name), type(type) {}
 
     Symbol(const Symbol &symbol) = default;
     ~Symbol() = default;
