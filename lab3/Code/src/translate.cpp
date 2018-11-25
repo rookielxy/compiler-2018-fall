@@ -4,6 +4,7 @@ void AstNode::translate() {
 	assert(tag == TAG_PROGRAM);
 	CodeBlock code = translateProgram();
 	code.display();
+	//code.debug();
 }
 
 CodeBlock AstNode::translateProgram() {
@@ -44,6 +45,49 @@ CodeBlock AstNode::translateExtDef() {
 		default: assert(false);
 	}
 	return ret;
+}
+
+CodeBlock AstNode::translateFunDec() {
+	assert(tag == TAG_FUN_DEC);
+	CodeBlock code;
+	AstNode *funId = first_child;
+	switch (attr) {
+		case FUNC_VAR: {
+			code.append(InterCode(IR_FUNC, new FuncOp(funId->str)));
+			AstNode *varList = first_child->first_sibling->first_sibling;
+			code.append(varList->translateVarList());
+			break;
+		}
+		case FUNC_EMPTY:
+			code.append(InterCode(IR_FUNC, new FuncOp(funId->str)));
+			break;
+		default: assert(false);
+	}
+	return code;
+}
+
+CodeBlock AstNode::translateVarList() {
+	assert(tag == TAG_VAR_LIST);
+	AstNode *varList = this, *paramDec = first_child;
+	CodeBlock code;
+	while (true) {
+		code.append(paramDec->translateParamDec());
+		if (paramDec->first_sibling == nullptr)
+			break;
+		varList = paramDec->first_sibling;
+		paramDec = varList->first_child;
+	}
+	return code;
+}
+
+CodeBlock AstNode::translateParamDec() {
+	assert(tag == TAG_PARAM_DEC);
+	CodeBlock code;
+	AstNode *specifier = first_child,
+			*varDec = specifier->first_sibling;
+	auto symbol = new SymbolOp(varDec->str, varDec->type->isBasic());
+	code.append(InterCode(IR_PARAM, symbol));
+	return code;
 }
 
 CodeBlock AstNode::translateCompSt() {
@@ -170,8 +214,8 @@ CodeBlock AstNode::translateDec() {
 			} else {
 				assert(false);						// assign structure or array not supported
 			}
+			break;
 		}
-		break;
 		default: assert(false);
 	}
 	return ret;
@@ -199,8 +243,9 @@ CodeBlock AstNode::translateExp() {
 				code.append(InterCode(IR_LSTAR, x, y));
 			else
 				code.append(InterCode(IR_ASSIGN, x, y));
+				
+			break;
 		}
-		break;
 		case PLUS_EXP: case MINUS_EXP:
 		case STAR_EXP: case DIV_EXP: {
 			AstNode *expr1 = first_child,
@@ -231,8 +276,9 @@ CodeBlock AstNode::translateExp() {
 				default: assert(false);
 			}
 			code.append(InterCode(type, x, y));
+
+			break;
 		}
-		break;
 		case NEG_EXP: {
 			AstNode *expr = first_child->first_sibling;
 			CodeBlock code1 = expr->translateExp();
@@ -241,27 +287,28 @@ CodeBlock AstNode::translateExp() {
 			
 			code.append(code1);
 			code.append(InterCode(IR_SUB, zero, x));
+			
+			break;
 		}
-		break;
 		case NEST_EXP: {
 			AstNode *expr = first_child->first_sibling;
 			CodeBlock code1 = expr->translateExp();
 			code.append(code1);
+			break;
 		}
-		break;
 		case INT_EXP: {
 			AstNode *intNode = first_child;
 			InterCode line = InterCode(IR_EMPTY, new ConstOp(intNode->ival));
 			code.append(line);
+			break;
 		}
-		break;
 		case ID_EXP: {
 			AstNode *id = first_child;
 			auto symOp = new SymbolOp(id->str, type->isBasic());
 			InterCode line = InterCode(IR_EMPTY, symOp);
 			code.append(line);
+			break;
 		}
-		break;
 		case STRUCT_EXP: {
 			AstNode *expr = first_child, 
 					*id = expr->first_sibling->first_sibling;
@@ -271,8 +318,9 @@ CodeBlock AstNode::translateExp() {
 
 			auto offset = new ConstOp(expr->type->getFieldOffset(id->str));
 			code.append(InterCode(IR_ADD, x, offset));
+
+			break;
 		}
-		break;
 		case ARRAY_EXP: {
 			AstNode *expr1 = first_child,
 					*expr2 = expr1->first_sibling->first_sibling;
@@ -286,16 +334,31 @@ CodeBlock AstNode::translateExp() {
 			InterCode offset = InterCode(IR_MUL, y, eleSz);
 			code.append(offset);
 			code.append(InterCode(IR_ADD, x, offset.getResult()));
-		}
-		break;
-		case FUNC_EMPTY_EXP: {
-			code.append(InterCode(IR_CALL, new FuncOp(str)));
-		}
-		break;
-		case FUNC_ARGS_EXP: {
 
+			break;
 		}
-		break;
+		case FUNC_EMPTY_EXP: {
+			AstNode *funId = first_child;
+			if (funId->str == "read")
+				code.append(InterCode(IR_READ));
+			else
+				code.append(InterCode(IR_CALL, new FuncOp(str)));
+			break;
+		}
+		case FUNC_ARGS_EXP: {
+			AstNode *funId = first_child,
+					*args = funId->first_sibling->first_sibling;
+			if (funId->str == "write") {
+				AstNode *expr = args->first_child;
+				assert(expr->first_sibling == nullptr);
+				code.append(expr->translateExp());
+				code.append(InterCode(IR_WRITE, code.getResult()));
+			} else {
+				code.append(args->translateArgs());
+				code.append(InterCode(IR_CALL, new FuncOp(str)));
+			}
+			break;
+		}
 		case REL_EXP: case NOT_EXP: 
 		case AND_EXP: case OR_EXP:
 		case FLOAT_EXP:
@@ -320,8 +383,8 @@ CodeBlock AstNode::translateCondStmt() {
 			code.append(expr->translateCondExp(nullptr, label));
 			code.append(stmtCode);
 			code.append(InterCode(IR_LABEL, label));
+			break;
 		}
-		break;
 		case IF_ELSE_STMT: {
 			AstNode *elseStmt = stmt->first_sibling->first_sibling;
 			CodeBlock elseCode = elseStmt->translateStmt();
@@ -334,8 +397,9 @@ CodeBlock AstNode::translateCondStmt() {
 			code.append(InterCode(IR_LABEL, label1));
 			code.append(elseCode);
 			code.append(InterCode(IR_LABEL, label2));
+
+			break;
 		}
-		break;
 		default: assert(false);
 	}
 	return code;
@@ -345,7 +409,7 @@ CodeBlock AstNode::translateCondExp(Label *labelTrue, Label *labelFalse) {
 	assert(tag == TAG_EXP);
 	assert(attr == REL_EXP or attr == NOT_EXP
 			or attr == AND_EXP or attr == OR_EXP);
-	assert(labelTrue == nullptr and labelFalse == nullptr);
+	assert(labelTrue != nullptr or labelFalse != nullptr);
 			
 	CodeBlock code;
 	switch (attr) {
@@ -371,8 +435,9 @@ CodeBlock AstNode::translateCondExp(Label *labelTrue, Label *labelFalse) {
 				code.append(InterCode(relopType, x, y, labelTrue));
 				code.append(InterCode(IR_GOTO, labelFalse));
 			}
+
+			break;
 		}
-		break;
 		case AND_EXP: case OR_EXP: {
 			AstNode *expr1 = first_child,
 					*binop = expr1->first_sibling,
@@ -403,13 +468,14 @@ CodeBlock AstNode::translateCondExp(Label *labelTrue, Label *labelFalse) {
 					break;
 				default: assert(false);
 			}
+
+			break;
 		}
-		break;
 		case NOT_EXP: {
 			AstNode *expr = first_child->first_sibling;
 			code.append(expr->translateCondExp(labelFalse, labelFalse));
+			break;
 		}
-		break;
 		default: assert(false);
 	}
 	return code;

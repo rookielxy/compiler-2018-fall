@@ -40,7 +40,6 @@ enum Attr {
 
 class AstNode {
     static SymbolTable symTable;
-
 public:
     enum Tag tag;
     AstNode* first_child;
@@ -75,6 +74,9 @@ public:
     void translate();
     CodeBlock translateProgram();
     CodeBlock translateExtDef();
+    CodeBlock translateFunDec();
+    CodeBlock translateVarList();
+    CodeBlock translateParamDec();
     CodeBlock translateCompSt();
     CodeBlock translateExtDecList();
     CodeBlock translateVarDec();

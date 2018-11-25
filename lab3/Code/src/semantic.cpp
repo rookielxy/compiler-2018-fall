@@ -71,7 +71,10 @@ void AstNode::parseExtDecList(const Type &type) {
     assert(tag == TAG_EXT_DEC_LIST);
     AstNode *extDecList = this, *varDec = first_child;
     while (varDec->first_sibling != nullptr) {
-        symTable.defineSymbol(Symbol(varDec, type));
+        auto symbol = Symbol(varDec, type);
+        symTable.defineSymbol(symbol);
+        varDec->type = new Type(symbol.getType());
+        varDec->str = symbol.getName();
         extDecList = varDec->first_sibling->first_sibling;
         varDec = extDecList->first_child;
     }
@@ -208,7 +211,8 @@ void AstNode::parseStmt(const Type &retType) {
                     *stmt2 = stmt1->first_sibling->first_sibling;
             expr->parseExp();
             stmt1->parseStmt(retType);
-            stmt2->parseStmt(retType);            
+            stmt2->parseStmt(retType);
+            break;            
         }
         default: assert(false);
     }

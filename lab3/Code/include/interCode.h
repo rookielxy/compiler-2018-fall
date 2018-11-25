@@ -66,7 +66,7 @@ public:
 	}
 
 	string display() { 
-		return "LABEL " + to_string(labelIdx) + " :"; 
+		return "label" + to_string(labelIdx) + " :"; 
 	}
 };
 
@@ -117,6 +117,7 @@ class InterCode {
 	Operand *op1, *op2, *result;
 public:
 	InterCode() = default;
+	InterCode(enum interCodeType kind);
 	InterCode(enum interCodeType kind, Operand *op);
 	InterCode(enum interCodeType kind, Operand *op1, Operand *op2);
 	InterCode(enum interCodeType kind, Operand *op1, Operand *op2, Operand *result);

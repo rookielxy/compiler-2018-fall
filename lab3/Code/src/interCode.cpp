@@ -3,10 +3,20 @@
 vector<Temp *> Temp::temps;
 int Label::counter = 0;
 
+InterCode::InterCode(enum interCodeType kind):
+			kind(kind), op1(nullptr), op2(nullptr), result(nullptr) {
+	switch (kind) {
+		case IR_READ:
+			result = new Temp(false);
+			break;
+		default: cout << kind << endl; assert(false);
+	}
+}
+
 InterCode::InterCode(enum interCodeType kind, Operand *op): 
 			kind(kind), op1(op), op2(nullptr), result(nullptr) {
 	switch (kind) {
-		case IR_RSTAR:
+		case IR_RSTAR: case IR_CALL:
 			result = new Temp(false);
 			break;
 		case IR_ADDR:
@@ -14,7 +24,8 @@ InterCode::InterCode(enum interCodeType kind, Operand *op):
 			break;
 		case IR_LSTAR: case IR_ASSIGN: 
 		case IR_DEC: case IR_BASIC_DEC:
-		case IR_EMPTY: case IR_CALL:
+		case IR_EMPTY: 
+		case IR_PARAM: case IR_WRITE:
 			result = op1;
 			break;
 		case IR_GOTO: case IR_LABEL: case IR_FUNC: 
@@ -61,26 +72,28 @@ Operand* InterCode::getResult() {
 	return result;
 }
 
+static string dict[] = {
+	"IR_EMPTY",
+
+	"IR_FUNC", "IR_LABEL", "IR_ASSIGN",
+	"IR_ADD", "IR_SUB", "IR_MUL", "IR_DIV",
+
+	"IR_GOTO", "IR_RETURN", 
+	"IR_RELOP_EQ", "IR_RELOP_NEQ",
+	"IR_RELOP_GT", "IR_RELOP_LT",
+	"IR_RELOP_GE", "IR_RELOP_LE",
+
+	"IR_ADDR", "IR_LSTAR", "IR_RSTAR",
+	
+	"IR_CALL", "IR_PARAM", "IR_ARGS",
+	"IR_DEC", "IR_BASIC_DEC",
+
+	"IR_READ", "IR_WRITE"
+};
+
 void InterCode::debug() {
-	static string dict[] = {
-		"IR_EMPTY",
 
-		"IR_FUNC", "IR_LABEL", "IR_ASSIGN",
-		"IR_ADD", "IR_SUB", "IR_MUL", "IR_DIV",
-
-		"IR_GOTO", "IR_RETURN", 
-		"IR_RELOP_EQ", "IR_RELOP_NEQ",
-		"IR_RELOP_GT", "IR_RELOP_LT",
-		"IR_RELOP_GE", "IR_RELOP_LE",
-
-		"IR_ADDR", "IR_LSTAR", "IR_RSTAR",
-		
-		"IR_CALL", "IR_PARAM", "IR_ARGS",
-		"IR_DEC", "IR_BASIC_DEC",
-
-		"IR_READ", "IR_WRITE"
-	};
-	cout << dict[kind];
+	cout << dict[kind] << " ";
 	if (result != nullptr)
 		cout << result->display() << " ";
 	if (op1 != nullptr)
@@ -131,7 +144,31 @@ void InterCode::display() {
 			cout << "DEC " << result->display() << " "
 				<< to_string(((ConstOp *)op2)->getValue()) << endl;
 			break;
-		default: assert(false);
+		case IR_READ:
+			cout << "READ " << result->display() << endl;
+			break;
+		case IR_WRITE:
+			cout << "WRITE " << result->display() << endl;
+			break;
+		case IR_RELOP_EQ: case IR_RELOP_NEQ:
+		case IR_RELOP_GE: case IR_RELOP_LE:
+		case IR_RELOP_GT: case IR_RELOP_LT:
+			cout << "IF " << op1->display() << " ";
+			switch (kind) {
+				case IR_RELOP_EQ: cout << "== "; break;
+				case IR_RELOP_NEQ: cout << "!= "; break;
+				case IR_RELOP_GT: cout << "> "; break;
+				case IR_RELOP_LT: cout << "< "; break;
+				case IR_RELOP_GE: cout << ">= "; break;
+				case IR_RELOP_LE: cout << "<= "; break;
+				default: assert(false);
+			}
+			cout << op2->display() << " GOTO " << result->display() << endl; 
+			break;
+		case IR_RETURN:
+			cout << "RETURN: " << op1->display() << endl;
+			break;
+		default: cout << kind << endl; assert(false);
 	}
 }
 
