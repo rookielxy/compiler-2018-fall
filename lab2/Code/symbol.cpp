@@ -4,11 +4,7 @@
 Symbol::Symbol(AstNode *param) {
     AstNode *specifier = param->first_child, *varDec = specifier->first_sibling,
             *id = varDec;
-    while (id->tag == TAG_VAR_DEC)
-        id = id->first_child;
-    name = id->str;
-    line_no = param->line_no;
-    type = specifier->parseSpecifier();
+    *this = Symbol(varDec, specifier->parseSpecifier());
 }
 
 Symbol::Symbol(AstNode *varDec, const Type &type) {

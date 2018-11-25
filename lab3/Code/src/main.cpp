@@ -29,7 +29,8 @@ int main(int argc , char **argv) {
 #endif
 	yyparse();
 	astRoot->syntaxParse();
-	astRoot->translate();
+	if (semanticCorrect)
+		astRoot->translate();
 	fclose(f);
 	return 0;
 }

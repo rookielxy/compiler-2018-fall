@@ -107,9 +107,7 @@ public:
 		this->name = name;
 	}
 
-	string display() {
-		return "FUNCTION " + name + " :";
-	}
+	string display() { return name; }
 };
 
 class InterCode {

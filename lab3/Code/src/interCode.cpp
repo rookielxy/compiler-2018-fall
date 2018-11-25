@@ -107,7 +107,7 @@ void InterCode::display() {
 	switch (kind) {
 		case IR_EMPTY: case IR_BASIC_DEC: break;
 		case IR_FUNC: 
-			cout << op1->display() << endl;
+			cout << "FUNCTION " << op1->display() << " :" << endl;
 			break;
 		case IR_LABEL:
 			cout << "LABEL " << op1->display() << endl;
