@@ -29,7 +29,7 @@ InterCode::InterCode(enum interCodeType kind, Operand *op):
 			result = op1;
 			break;
 		case IR_GOTO: case IR_LABEL: case IR_FUNC: 
-		case IR_RETURN:
+		case IR_RETURN: case IR_ARGS:
 			break;
 		default: cout << kind << endl; assert(false);
 	}
@@ -167,6 +167,15 @@ void InterCode::display() {
 			break;
 		case IR_RETURN:
 			cout << "RETURN: " << op1->display() << endl;
+			break;
+		case IR_ARGS:
+			cout << "ARGS: " << op1->display() << endl;
+			break;
+		case IR_PARAM:
+			cout << "PARAM: " << op1->display() << endl;
+			break;
+		case IR_CALL:
+			cout << result->display() << " := CALL " << op1->display() << endl;
 			break;
 		default: cout << kind << endl; assert(false);
 	}

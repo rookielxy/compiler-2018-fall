@@ -132,7 +132,7 @@ CodeBlock AstNode::translateVarDec() {
 }
 
 CodeBlock AstNode::translateDefList() {
-	assert(tag == TAG_DEF_LIST);
+	assert(tag == TAG_DEF_LIST or tag == TAG_EMPTY);
 	AstNode *defList = this, *def = first_child;
 	CodeBlock ret;
 	while (defList->tag != TAG_EMPTY) {
@@ -145,7 +145,7 @@ CodeBlock AstNode::translateDefList() {
 }
 
 CodeBlock AstNode::translateStmtList() {
-	assert(tag == TAG_STMT_LIST);
+	assert(tag == TAG_STMT_LIST or tag == TAG_EMPTY);
 	AstNode *stmtList = this, *stmt = first_child;
 	CodeBlock ret;
 	while (stmtList->tag != TAG_EMPTY) {
