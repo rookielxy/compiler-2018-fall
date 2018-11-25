@@ -61,9 +61,7 @@ CodeBlock AstNode::translateExtDecList() {
 	AstNode *extDecList = this, *varDec = first_child;
 	CodeBlock ret;
 	while (true) {
-		InterCode code = varDec->translateVarDec();
-		if (code.getType() != IR_BASIC_DEC)
-			ret.append(code);
+		ret.append(varDec->translateVarDec());
 		if (varDec->first_sibling == nullptr)
 			break;
 		extDecList = varDec->first_sibling->first_sibling;
@@ -72,16 +70,21 @@ CodeBlock AstNode::translateExtDecList() {
 	return ret;
 }
 
-InterCode AstNode::translateVarDec() {
+CodeBlock AstNode::translateVarDec() {
 	assert(tag == TAG_VAR_DEC);
+	CodeBlock code;
 	if (not type->isBasic()) {
 		assert(type->isArray() or type->isStruct());
 		int size = type->getTypeSize();
 		auto sz = new ConstOp(size);
-		auto var = new SymbolOp(str);
-		return InterCode(IR_DEC, var, sz);
+		auto var = new SymbolOp(str, false);
+		code.append(InterCode(IR_DEC, var, sz));
+		code.append(InterCode(IR_ADDR, code.getResult()));
+		code.append(InterCode(IR_ASSIGN, var, code.getResult()));
+	} else {
+		code.append(InterCode(IR_BASIC_DEC, new SymbolOp(str, true)));
 	}
-	return InterCode(IR_BASIC_DEC, new SymbolOp(str));
+	return code;
 }
 
 CodeBlock AstNode::translateDefList() {
@@ -158,7 +161,7 @@ CodeBlock AstNode::translateDec() {
 			break;
 		case ASSIGN_DEC: {
 			AstNode *expr = varDec->first_sibling->first_sibling;
-			InterCode code = varDec->translateVarDec();
+			CodeBlock code = varDec->translateVarDec();
 			if (code.getType() == IR_BASIC_DEC) {
 				CodeBlock expCode = expr->translateExp();
 				InterCode assign = InterCode(IR_ASSIGN, code.getResult(), expCode.getResult());
@@ -254,13 +257,9 @@ CodeBlock AstNode::translateExp() {
 		break;
 		case ID_EXP: {
 			AstNode *id = first_child;
-			auto symOp = new SymbolOp(id->str);
+			auto symOp = new SymbolOp(id->str, type->isBasic());
 			InterCode line = InterCode(IR_EMPTY, symOp);
 			code.append(line);
-			if (not type->isBasic()) {
-				InterCode addr = InterCode(IR_ADDR, symOp);
-				code.append(addr);
-			}
 		}
 		break;
 		case STRUCT_EXP: {
@@ -289,8 +288,14 @@ CodeBlock AstNode::translateExp() {
 			code.append(InterCode(IR_ADD, x, offset.getResult()));
 		}
 		break;
-		case FUNC_EMPTY_EXP:
-		case FUNC_ARGS_EXP:
+		case FUNC_EMPTY_EXP: {
+			code.append(InterCode(IR_CALL, new FuncOp(str)));
+		}
+		break;
+		case FUNC_ARGS_EXP: {
+
+		}
+		break;
 		case REL_EXP: case NOT_EXP: 
 		case AND_EXP: case OR_EXP:
 		case FLOAT_EXP:
@@ -429,5 +434,20 @@ CodeBlock AstNode::translateLoop() {
 	code.append(InterCode(IR_GOTO, begin));
 	code.append(InterCode(IR_LABEL, end));
 
+	return code;
+}
+
+CodeBlock AstNode::translateArgs() {
+	assert(tag == TAG_ARGS);
+	CodeBlock code;
+	AstNode *args = this, *expr = first_child;
+	while (true) {
+		code.append(expr->translateExp());
+		code.append(InterCode(IR_ARGS, code.getResult()));
+		if (expr->first_sibling == nullptr)
+			break;
+		args = expr->first_sibling;
+		expr = args->first_child;
+	}
 	return code;
 }

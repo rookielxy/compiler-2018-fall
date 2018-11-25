@@ -14,7 +14,7 @@ InterCode::InterCode(enum interCodeType kind, Operand *op):
 			break;
 		case IR_LSTAR: case IR_ASSIGN: 
 		case IR_DEC: case IR_BASIC_DEC:
-		case IR_EMPTY:
+		case IR_EMPTY: case IR_CALL:
 			result = op1;
 			break;
 		case IR_GOTO: case IR_LABEL: case IR_FUNC: 
@@ -59,6 +59,35 @@ Operand* InterCode::getResult() {
 		assert(false);
 	}
 	return result;
+}
+
+void InterCode::debug() {
+	static string dict[] = {
+		"IR_EMPTY",
+
+		"IR_FUNC", "IR_LABEL", "IR_ASSIGN",
+		"IR_ADD", "IR_SUB", "IR_MUL", "IR_DIV",
+
+		"IR_GOTO", "IR_RETURN", 
+		"IR_RELOP_EQ", "IR_RELOP_NEQ",
+		"IR_RELOP_GT", "IR_RELOP_LT",
+		"IR_RELOP_GE", "IR_RELOP_LE",
+
+		"IR_ADDR", "IR_LSTAR", "IR_RSTAR",
+		
+		"IR_CALL", "IR_PARAM", "IR_ARGS",
+		"IR_DEC", "IR_BASIC_DEC",
+
+		"IR_READ", "IR_WRITE"
+	};
+	cout << dict[kind];
+	if (result != nullptr)
+		cout << result->display() << " ";
+	if (op1 != nullptr)
+		cout << op1->display() << " ";
+	if (op2 != nullptr)
+		cout << op2->display();
+	cout << endl;
 }
 
 void InterCode::display() {
@@ -121,4 +150,9 @@ Operand* CodeBlock::getResult() {
 void CodeBlock::display() {
 	for (auto &ele : code)
 		ele.display();
+}
+
+void CodeBlock::debug() {
+	for (auto &ele : code)
+		ele.debug();
 }

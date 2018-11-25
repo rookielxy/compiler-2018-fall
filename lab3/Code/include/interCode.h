@@ -22,7 +22,8 @@ enum interCodeType {
 
 	IR_ADDR, IR_LSTAR, IR_RSTAR,
 	
-	IR_CALL, IR_PARAM, IR_DEC, IR_BASIC_DEC,
+	IR_CALL, IR_PARAM, IR_ARGS,
+	IR_DEC, IR_BASIC_DEC,
 
 	IR_READ, IR_WRITE
 };
@@ -86,15 +87,16 @@ public:
 
 class SymbolOp : public Operand {
 	string name;
+	bool basic;
 public:
-	explicit SymbolOp(string name) {
+	explicit SymbolOp(string name, bool basic) {
 		kind = OP_VARIABLE;
 		this->name = name;
+		this->basic = basic;
 	}
 
-	string display() {
-		return name;
-	}
+	bool isPtr() { return not basic; }
+	string display() { return name; }
 };
 
 class FuncOp : public Operand {
@@ -121,6 +123,7 @@ public:
 	enum interCodeType getType() { return kind; }
 	Operand* getResult();
 	void display();
+	void debug();
 };
 
 class CodeBlock {
@@ -129,8 +132,10 @@ public:
 	CodeBlock() = default;
 	void append(CodeBlock toAdd);
 	void append(const InterCode &toAdd);
+	enum interCodeType getType() { return code.back().getType(); }
 	Operand* getResult();
 	void display();
+	void debug();
 };
 
 #endif

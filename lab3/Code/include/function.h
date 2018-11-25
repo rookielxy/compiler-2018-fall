@@ -18,7 +18,7 @@ public:
 
 	Function(AstNode *funDec, const Type &type, bool def);
     Function(const string &name, const Type &type, vector<Symbol> args): 
-            name(name), ret(type), args(args) {}
+            name(name), ret(type), args(args), def(true) {}
     string getName() const { return name; }
     bool isDef() const { return def; }
     bool operator==(const Function &func);

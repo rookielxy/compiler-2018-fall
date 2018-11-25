@@ -77,7 +77,7 @@ public:
     CodeBlock translateExtDef();
     CodeBlock translateCompSt();
     CodeBlock translateExtDecList();
-    InterCode translateVarDec();
+    CodeBlock translateVarDec();
     CodeBlock translateDefList();
     CodeBlock translateStmtList();
     CodeBlock translateDef();
@@ -87,6 +87,7 @@ public:
     CodeBlock translateCondStmt();
     CodeBlock translateCondExp(Label *labelTrue, Label *labelFalse);
     CodeBlock translateLoop();
+    CodeBlock translateArgs();
     
     enum interCodeType relopType();
 };
