@@ -156,7 +156,10 @@ vector<Symbol> AstNode::parseVarList() {
     AstNode *param = first_child;
     vector<Symbol> result;
     while (true) {
-        result.emplace_back(Symbol(param));
+        auto symbol = Symbol(param);
+        result.emplace_back(symbol);
+        param->type = new Type(symbol.getType());
+        param->str = symbol.getName();
         if (param->first_sibling == nullptr)
             break;
         param = param->first_sibling->first_child;

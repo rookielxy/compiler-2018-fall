@@ -76,7 +76,6 @@ public:
     CodeBlock translateExtDef();
     CodeBlock translateFunDec();
     CodeBlock translateVarList();
-    CodeBlock translateParamDec();
     CodeBlock translateCompSt();
     CodeBlock translateExtDecList();
     CodeBlock translateVarDec();

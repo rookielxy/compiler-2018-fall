@@ -33,12 +33,10 @@ CodeBlock AstNode::translateExtDef() {
 		break;
 		case VOID_DEC: break;
 		case FUNC_DEF: {
-			AstNode *funDec = first_child->first_sibling, 
-				*compSt = funDec->first_sibling,
-				*funId = funDec->first_child;
-			ret.append(InterCode(IR_FUNC, new FuncOp(funId->str)));
-			CodeBlock toAdd = compSt->translateCompSt();
-			ret.append(toAdd);
+			AstNode *funDec = first_child->first_sibling,
+					*compSt = funDec->first_sibling;
+			ret.append(funDec->translateFunDec());
+			ret.append(compSt->translateCompSt());
 		}
 		break;
 		case FUNC_DEC: break;
@@ -51,16 +49,14 @@ CodeBlock AstNode::translateFunDec() {
 	assert(tag == TAG_FUN_DEC);
 	CodeBlock code;
 	AstNode *funId = first_child;
+	code.append(InterCode(IR_FUNC, new FuncOp(funId->str)));
 	switch (attr) {
 		case FUNC_VAR: {
-			code.append(InterCode(IR_FUNC, new FuncOp(funId->str)));
 			AstNode *varList = first_child->first_sibling->first_sibling;
 			code.append(varList->translateVarList());
 			break;
 		}
-		case FUNC_EMPTY:
-			code.append(InterCode(IR_FUNC, new FuncOp(funId->str)));
-			break;
+		case FUNC_EMPTY: break;
 		default: assert(false);
 	}
 	return code;
@@ -71,22 +67,13 @@ CodeBlock AstNode::translateVarList() {
 	AstNode *varList = this, *paramDec = first_child;
 	CodeBlock code;
 	while (true) {
-		code.append(paramDec->translateParamDec());
+		auto symbol = new SymbolOp(paramDec->str, paramDec->type->isBasic());
+		code.append(InterCode(IR_PARAM, symbol));
 		if (paramDec->first_sibling == nullptr)
 			break;
 		varList = paramDec->first_sibling;
 		paramDec = varList->first_child;
 	}
-	return code;
-}
-
-CodeBlock AstNode::translateParamDec() {
-	assert(tag == TAG_PARAM_DEC);
-	CodeBlock code;
-	AstNode *specifier = first_child,
-			*varDec = specifier->first_sibling;
-	auto symbol = new SymbolOp(varDec->str, varDec->type->isBasic());
-	code.append(InterCode(IR_PARAM, symbol));
 	return code;
 }
 
@@ -97,6 +84,7 @@ CodeBlock AstNode::translateCompSt() {
 	CodeBlock code1 = defList->translateDefList();
 	CodeBlock code2 = stmtList->translateStmtList();
 	code1.append(code2);
+	code1.clearCompstDeadCode();
 	return code1;
 }
 
@@ -356,7 +344,7 @@ CodeBlock AstNode::translateExp() {
 			if (funId->str == "read")
 				code.append(InterCode(IR_READ));
 			else
-				code.append(InterCode(IR_CALL, new FuncOp(str)));
+				code.append(InterCode(IR_CALL, new FuncOp(funId->str)));
 			break;
 		}
 		case FUNC_ARGS_EXP: {
@@ -369,7 +357,7 @@ CodeBlock AstNode::translateExp() {
 				code.append(InterCode(IR_WRITE, code.getResult()));
 			} else {
 				code.append(args->translateArgs());
-				code.append(InterCode(IR_CALL, new FuncOp(str)));
+				code.append(InterCode(IR_CALL, new FuncOp(funId->str)));
 			}
 			break;
 		}
@@ -404,7 +392,8 @@ CodeBlock AstNode::translateCondStmt(Label *next) {
 			auto label = new Label();
 			code.append(expr->translateCondExp(nullptr, label));
 			code.append(stmtCode);
-			code.append(InterCode(IR_GOTO, next));
+			if (not code.endWithReturn())
+				code.append(InterCode(IR_GOTO, next));
 			code.append(InterCode(IR_LABEL, label));
 			code.append(elseCode);
 			break;

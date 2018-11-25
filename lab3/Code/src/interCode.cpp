@@ -106,8 +106,11 @@ void InterCode::debug() {
 void InterCode::display() {
 	switch (kind) {
 		case IR_EMPTY: case IR_BASIC_DEC: break;
-		case IR_FUNC: case IR_LABEL:
+		case IR_FUNC: 
 			cout << op1->display() << endl;
+			break;
+		case IR_LABEL:
+			cout << "LABEL " << op1->display() << endl;
 			break;
 		case IR_ASSIGN:
 			cout << result->display() << " := "
@@ -166,18 +169,30 @@ void InterCode::display() {
 			cout << op2->display() << " GOTO " << result->display() << endl; 
 			break;
 		case IR_RETURN:
-			cout << "RETURN: " << op1->display() << endl;
+			cout << "RETURN " << op1->display() << endl;
 			break;
 		case IR_ARGS:
-			cout << "ARGS: " << op1->display() << endl;
+			cout << "ARG " << op1->display() << endl;
 			break;
 		case IR_PARAM:
-			cout << "PARAM: " << op1->display() << endl;
+			cout << "PARAM " << op1->display() << endl;
 			break;
 		case IR_CALL:
 			cout << result->display() << " := CALL " << op1->display() << endl;
 			break;
 		default: cout << kind << endl; assert(false);
+	}
+}
+
+void CodeBlock::clearCompstDeadCode() {
+	bool retStmt = false;
+	for (auto it = code.begin(); it != code.end(); ++it) {
+		if (it->getType() == IR_RETURN)
+			retStmt = true;
+	}
+	if (retStmt) {
+		while (code.back().getType() != IR_RETURN)
+			code.pop_back();
 	}
 }
 

@@ -8,7 +8,7 @@ Symbol::Symbol(AstNode *param) {
         id = id->first_child;
     name = id->str;
     line_no = param->line_no;
-    type = specifier->parseSpecifier();
+    this->type = specifier->parseSpecifier();
 	offset = 0;
 }
 

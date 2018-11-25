@@ -135,6 +135,8 @@ public:
 	void append(const InterCode &toAdd);
 	enum interCodeType getType() { return code.back().getType(); }
 	Operand* getResult();
+	void clearCompstDeadCode();
+	bool endWithReturn() { return code.back().getType() == IR_RETURN; }
 	void display();
 	void debug();
 };
