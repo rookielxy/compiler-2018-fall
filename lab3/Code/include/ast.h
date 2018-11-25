@@ -85,10 +85,10 @@ public:
     CodeBlock translateDef();
     CodeBlock translateDec();
     CodeBlock translateExp();
-    CodeBlock translateStmt();
-    CodeBlock translateCondStmt();
+    CodeBlock translateStmt(Label *next);
+    CodeBlock translateCondStmt(Label *next);
     CodeBlock translateCondExp(Label *labelTrue, Label *labelFalse);
-    CodeBlock translateLoop();
+    CodeBlock translateLoop(Label *next);
     CodeBlock translateArgs();
     
     enum interCodeType relopType();

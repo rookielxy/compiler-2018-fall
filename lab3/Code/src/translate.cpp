@@ -149,14 +149,14 @@ CodeBlock AstNode::translateStmtList() {
 	AstNode *stmtList = this, *stmt = first_child;
 	CodeBlock ret;
 	while (stmtList->tag != TAG_EMPTY) {
-		ret.append(stmt->translateStmt());
+		ret.append(stmt->translateStmt(nullptr));
 		stmtList = stmt->first_sibling;
 		stmt = stmtList->first_child;
 	}
 	return ret;
 }
 
-CodeBlock AstNode::translateStmt() {
+CodeBlock AstNode::translateStmt(Label *next) {
 	assert(tag == TAG_STMT);
 	switch (attr) {
 		case EXP_STMT:
@@ -171,10 +171,24 @@ CodeBlock AstNode::translateStmt() {
 			expCode.append(retCode);
 			return expCode;
 		}
-		case IF_STMT: case IF_ELSE_STMT:
-			return translateCondStmt();
-		case WHILE_STMT:
-			return translateLoop();
+		case IF_STMT: case IF_ELSE_STMT: {
+			bool successive = next == nullptr;
+			if (successive)
+				next = new Label();
+			CodeBlock code = translateCondStmt(next);
+			if (successive)
+				code.append(InterCode(IR_LABEL, next));
+			return code;
+		}
+		case WHILE_STMT: {
+			bool successive = next == nullptr;
+			if (successive)
+				next = new Label();
+			CodeBlock code = translateLoop(next);
+			if (successive)
+				code.append(InterCode(IR_LABEL, next));
+			return code;
+		}
 		default: assert(false);
 	}
 }
@@ -367,7 +381,7 @@ CodeBlock AstNode::translateExp() {
 	return code;
 }
 
-CodeBlock AstNode::translateCondStmt() {
+CodeBlock AstNode::translateCondStmt(Label *next) {
 	assert(tag == TAG_STMT);
 	assert(attr == IF_STMT or attr == IF_ELSE_STMT);
 	CodeBlock code;
@@ -375,29 +389,24 @@ CodeBlock AstNode::translateCondStmt() {
 	assert(expr->attr == REL_EXP);
 
 	AstNode *stmt = expr->first_sibling->first_sibling;
-	CodeBlock stmtCode = stmt->translateStmt();
+	CodeBlock stmtCode = stmt->translateStmt(next);
 
 	switch(attr) {
 		case IF_STMT: {
-			auto label = new Label();
-			code.append(expr->translateCondExp(nullptr, label));
+			code.append(expr->translateCondExp(nullptr, next));
 			code.append(stmtCode);
-			code.append(InterCode(IR_LABEL, label));
 			break;
 		}
 		case IF_ELSE_STMT: {
 			AstNode *elseStmt = stmt->first_sibling->first_sibling;
-			CodeBlock elseCode = elseStmt->translateStmt();
+			CodeBlock elseCode = elseStmt->translateStmt(next);
 			
-			auto label1 = new Label();
-			auto label2 = new Label();
-			code.append(expr->translateCondExp(nullptr, label1));
+			auto label = new Label();
+			code.append(expr->translateCondExp(nullptr, label));
 			code.append(stmtCode);
-			code.append(InterCode(IR_GOTO, label2));
-			code.append(InterCode(IR_LABEL, label1));
+			code.append(InterCode(IR_GOTO, next));
+			code.append(InterCode(IR_LABEL, label));
 			code.append(elseCode);
-			code.append(InterCode(IR_LABEL, label2));
-
 			break;
 		}
 		default: assert(false);
@@ -481,7 +490,7 @@ CodeBlock AstNode::translateCondExp(Label *labelTrue, Label *labelFalse) {
 	return code;
 }
 
-CodeBlock AstNode::translateLoop() {
+CodeBlock AstNode::translateLoop(Label *next) {
 	assert(tag == TAG_STMT);
 	assert(attr == WHILE_STMT);
 	CodeBlock code;
@@ -489,16 +498,14 @@ CodeBlock AstNode::translateLoop() {
 	assert(expr->attr == REL_EXP);
 
 	auto begin = new Label();
-	auto end = new Label();
 
 	AstNode *stmt = expr->first_sibling->first_sibling;
-	CodeBlock stmtCode = stmt->translateStmt();
+	CodeBlock stmtCode = stmt->translateStmt(begin);
 
 	code.append(InterCode(IR_LABEL, begin));
-	code.append(expr->translateCondExp(nullptr, end));
+	code.append(expr->translateCondExp(nullptr, next));
 	code.append(stmtCode);
 	code.append(InterCode(IR_GOTO, begin));
-	code.append(InterCode(IR_LABEL, end));
 
 	return code;
 }
