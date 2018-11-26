@@ -66,7 +66,7 @@ public:
 	}
 
 	string display() { 
-		return "label" + to_string(labelIdx) + " :"; 
+		return "label" + to_string(labelIdx); 
 	}
 };
 

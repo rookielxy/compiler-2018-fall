@@ -110,7 +110,7 @@ void InterCode::display() {
 			cout << "FUNCTION " << op1->display() << " :" << endl;
 			break;
 		case IR_LABEL:
-			cout << "LABEL " << op1->display() << endl;
+			cout << "LABEL " << op1->display() << " :" << endl;
 			break;
 		case IR_ASSIGN:
 			cout << result->display() << " := "
