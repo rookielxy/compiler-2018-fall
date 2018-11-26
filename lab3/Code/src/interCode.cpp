@@ -42,6 +42,11 @@ InterCode::InterCode(enum interCodeType kind, Operand *op1, Operand *op2):
 		case IR_ASSIGN: case IR_LSTAR:
 			result = op1;
 			break;
+		case IR_ADDR:
+			result = op1;
+			this->op1 = op2;
+			this->op2 = nullptr;
+			break;
 		case IR_ADD: case IR_SUB: 
 			result = new Temp(op1->isPtr() or op2->isPtr());
 			break;

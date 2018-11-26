@@ -112,8 +112,7 @@ CodeBlock AstNode::translateVarDec() {
 		auto var = new SymbolOp(str + "_var", false);
 		auto varAddr = new SymbolOp(str, false);
 		code.append(InterCode(IR_DEC, var, sz));
-		code.append(InterCode(IR_ADDR, code.getResult()));
-		code.append(InterCode(IR_ASSIGN, varAddr, code.getResult()));
+		code.append(InterCode(IR_ADDR, varAddr, var));
 	} else {
 		code.append(InterCode(IR_BASIC_DEC, new SymbolOp(str, true)));
 	}

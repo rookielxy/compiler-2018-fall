@@ -8,14 +8,13 @@ t4 := t2 + t3
 RETURN t4
 FUNCTION main :
 DEC op_var 8
-t5 := &op_var
-op := t5
-t6 := op + #0
-*t6 := #1
-t7 := op + #4
-*t7 := #2
+op := &op_var
+t5 := op + #0
+*t5 := #1
+t6 := op + #4
+*t6 := #2
 ARG op
-t8 := CALL add
-n := t8
+t7 := CALL add
+n := t7
 WRITE n
 RETURN #0

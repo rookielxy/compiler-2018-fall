@@ -10,40 +10,38 @@ t6 := t4 + t5
 RETURN t6
 FUNCTION main :
 DEC op_var 8
-t7 := &op_var
-op := t7
+op := &op_var
 DEC r_var 8
-t8 := &r_var
-r := t8
+r := &r_var
 i := #0
 j := #0
 LABEL label1 :
 IF i >= #2 GOTO label0
 LABEL label3 :
 IF j >= #2 GOTO label2
-t9 := j * #4
-t10 := op + t9
-t11 := i + j
-*t10 := t11
-t12 := j + #1
-j := t12
+t7 := j * #4
+t8 := op + t7
+t9 := i + j
+*t8 := t9
+t10 := j + #1
+j := t10
 GOTO label3
 LABEL label2 :
-t13 := #0 * #4
-t14 := r + t13
-t15 := i * #4
-t16 := t14 + t15
+t11 := #0 * #4
+t12 := r + t11
+t13 := i * #4
+t14 := t12 + t13
 ARG op
-t17 := CALL add
-*t16 := t17
-t18 := #0 * #4
-t19 := r + t18
-t20 := i * #4
-t21 := t19 + t20
-t22 := *t21
-WRITE t22
-t23 := i + #1
-i := t23
+t15 := CALL add
+*t14 := t15
+t16 := #0 * #4
+t17 := r + t16
+t18 := i * #4
+t19 := t17 + t18
+t20 := *t19
+WRITE t20
+t21 := i + #1
+i := t21
 j := #0
 GOTO label1
 LABEL label0 :

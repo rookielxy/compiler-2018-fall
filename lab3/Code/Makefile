@@ -35,10 +35,10 @@ syntax-c: $(YFILE)
 # 定义的一些伪目标
 .PHONY: clean run
 run:
-	../parser ../Test/test1.cmm > ../Out/out1.ir
-	../parser ../Test/test2.cmm > ../Out/out2.ir
-	../parser ../Test/test3.cmm > ../Out/out3.ir
-	../parser ../Test/test4.cmm > ../Out/out4.ir
+	../parser ../Test/test1.cmm > ../Out/test1.ir
+	../parser ../Test/test2.cmm > ../Out/test2.ir
+	../parser ../Test/test3.cmm > ../Out/test3.ir
+	../parser ../Test/test4.cmm > ../Out/test4.ir
 
 clean:
 	rm -f parser lex.yy.c $(filter-out $(YFILE), $(shell find ./ -name "syntax.*"))
