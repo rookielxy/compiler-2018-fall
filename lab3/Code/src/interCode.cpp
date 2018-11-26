@@ -22,7 +22,7 @@ InterCode::InterCode(enum interCodeType kind, Operand *op):
 		case IR_ADDR:
 			result = new Temp(true);
 			break;
-		case IR_LSTAR: case IR_ASSIGN: 
+		case IR_ASSIGN: 
 		case IR_DEC: case IR_BASIC_DEC:
 		case IR_EMPTY: 
 		case IR_PARAM: case IR_WRITE:

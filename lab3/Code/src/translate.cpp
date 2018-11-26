@@ -109,10 +109,11 @@ CodeBlock AstNode::translateVarDec() {
 		assert(type->isArray() or type->isStruct());
 		int size = type->getTypeSize();
 		auto sz = new ConstOp(size);
-		auto var = new SymbolOp(str, false);
+		auto var = new SymbolOp(str + "_var", false);
+		auto varAddr = new SymbolOp(str, false);
 		code.append(InterCode(IR_DEC, var, sz));
 		code.append(InterCode(IR_ADDR, code.getResult()));
-		code.append(InterCode(IR_ASSIGN, var, code.getResult()));
+		code.append(InterCode(IR_ASSIGN, varAddr, code.getResult()));
 	} else {
 		code.append(InterCode(IR_BASIC_DEC, new SymbolOp(str, true)));
 	}
@@ -354,6 +355,8 @@ CodeBlock AstNode::translateExp() {
 				AstNode *expr = args->first_child;
 				assert(expr->first_sibling == nullptr);
 				code.append(expr->translateExp());
+				if (code.getResult()->isPtr())
+					code.append(InterCode(IR_RSTAR, code.getResult()));
 				code.append(InterCode(IR_WRITE, code.getResult()));
 			} else {
 				code.append(args->translateArgs());
