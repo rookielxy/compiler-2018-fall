@@ -28,6 +28,7 @@ enum interCodeType {
 	IR_READ, IR_WRITE
 };
 
+
 class Operand {
 protected:
 	enum operandType kind;
@@ -36,17 +37,26 @@ public:
 	enum operandType getType() { return kind; };
 	virtual string display() = 0;
 	virtual bool isPtr() { return false; }
+	virtual void assign() {}
+	virtual void ref() {}
 };
 
+
 class Temp : public Operand {
+	friend class CodeBlock;
+
 	static vector<Temp*> temps;
+
 	int tempIdx;
 	bool ptr;
+	int assignCount;
+	int refCount;
 public:
 	Temp(bool ptr): ptr(ptr) {
 		kind = OP_TEMP;
 		tempIdx = temps.size();
 		temps.emplace_back(this);
+		assignCount = refCount = 0;
 	}
 
 	string display() {
@@ -54,8 +64,10 @@ public:
 	}
 
 	bool isPtr() { return ptr; }
-	static vector<Temp*> getTempList() { return temps; }
+	void assign() { ++assignCount; }
+	void ref() { ++refCount; }
 };
+
 
 class Label : public Operand {
 	static int counter;
@@ -72,6 +84,7 @@ public:
 	}
 };
 
+
 class ConstOp : public Operand {
 	int value;
 public:
@@ -87,6 +100,7 @@ public:
 	int getValue() { return value; }
 };
 
+
 class SymbolOp : public Operand {
 	string name;
 	bool basic;
@@ -101,6 +115,7 @@ public:
 	string display() { return name; }
 };
 
+
 class FuncOp : public Operand {
 	string name;
 public:
@@ -111,6 +126,7 @@ public:
 
 	string display() { return name; }
 };
+
 
 class InterCode {
 	friend class CodeBlock;
@@ -129,6 +145,7 @@ public:
 	void debug();
 };
 
+
 class CodeBlock {
 	list<InterCode> code;
 public:
@@ -143,6 +160,7 @@ public:
 	void debug();
 	void optimize();
 	bool optimizeOneRun();
+	static bool optimizeOneBlock(list<InterCode>::iterator, list<InterCode>::iterator);
 };
 
 #endif
