@@ -17,6 +17,7 @@
 
 // #define LEX_DEBUG
 // #define YY_DEBUG
+#define IR_OPTIMIZE
 
 using namespace std;
 

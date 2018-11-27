@@ -6,7 +6,7 @@ WRITE #1
 GOTO label0
 LABEL label2 :
 IF n >= #0 GOTO label1
-t1 := #0 - #1
+t1 := #-1
 WRITE t1
 GOTO label0
 LABEL label1 :

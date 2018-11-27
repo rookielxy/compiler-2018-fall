@@ -97,7 +97,6 @@ static string dict[] = {
 };
 
 void InterCode::debug() {
-
 	cout << dict[kind] << " ";
 	if (result != nullptr)
 		cout << result->display() << " ";
@@ -221,4 +220,43 @@ void CodeBlock::display() {
 void CodeBlock::debug() {
 	for (auto &ele : code)
 		ele.debug();
+}
+
+void CodeBlock::optimize() {
+	while (optimizeOneRun());
+}
+
+bool CodeBlock::optimizeOneRun() {
+	bool optimized = false;
+
+	// precompute constant calculation
+	for (auto it = code.begin(); it != code.end(); ++it) {
+		switch (it->getType()) {
+			case IR_ADD: case IR_SUB: case IR_MUL: case IR_DIV: {
+				if (it->op1->getType() != OP_CONST or it->op2->getType() != OP_CONST)
+					break;
+				optimized = true;
+				ConstOp *const1 = (ConstOp*)it->op1, *const2 = (ConstOp*)it->op2;
+				int value;
+				switch (it->getType()) {
+					case IR_ADD: value = const1->getValue() + const2->getValue(); break;
+					case IR_SUB: value = const1->getValue() - const2->getValue(); break;
+					case IR_MUL: value = const1->getValue() * const2->getValue(); break;
+					case IR_DIV: value = const1->getValue() / const2->getValue(); break;
+					default: assert(false);
+				}
+				ConstOp *result = new ConstOp(value);
+				delete it->op1;
+				delete it->op2;
+				it->kind = IR_ASSIGN;
+				it->op1 = nullptr;
+				it->op2 = result;
+				break;
+			}
+		}
+	}
+
+	auto blockStart = code.begin(), blockEnd = code.begin();
+	
+	return optimized;
 }

@@ -33,12 +33,13 @@ protected:
 	enum operandType kind;
 public:
 	Operand() = default;
+	enum operandType getType() { return kind; };
 	virtual string display() = 0;
 	virtual bool isPtr() { return false; }
 };
 
 class Temp : public Operand {
-	static vector<Temp *> temps;
+	static vector<Temp*> temps;
 	int tempIdx;
 	bool ptr;
 public:
@@ -53,6 +54,7 @@ public:
 	}
 
 	bool isPtr() { return ptr; }
+	static vector<Temp*> getTempList() { return temps; }
 };
 
 class Label : public Operand {
@@ -111,6 +113,8 @@ public:
 };
 
 class InterCode {
+	friend class CodeBlock;
+
 	enum interCodeType kind;
 	Operand *op1, *op2, *result;
 public:
@@ -137,6 +141,8 @@ public:
 	bool endWithReturn() { return code.back().getType() == IR_RETURN; }
 	void display();
 	void debug();
+	void optimize();
+	bool optimizeOneRun();
 };
 
 #endif

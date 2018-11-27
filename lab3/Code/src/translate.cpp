@@ -3,6 +3,9 @@
 void AstNode::translate() {
 	assert(tag == TAG_PROGRAM);
 	CodeBlock code = translateProgram();
+#ifdef IR_OPTIMIZE
+	code.optimize();
+#endif
 	code.display();
 	//code.debug();
 }
