@@ -37,8 +37,9 @@ public:
 	enum operandType getType() { return kind; };
 	virtual string display() = 0;
 	virtual bool isPtr() { return false; }
-	virtual void assign() {}
-	virtual void ref() {}
+	virtual void assign(list<InterCode>::iterator) {}
+	virtual void ref(list<InterCode>::iterator) {}
+	virtual void outerRef() {}
 };
 
 
@@ -49,14 +50,16 @@ class Temp : public Operand {
 
 	int tempIdx;
 	bool ptr;
-	int assignCount;
-	int refCount;
+	
+	vector<list<InterCode>::iterator> assginCode;
+	vector<list<InterCode>::iterator> refCode;
+	bool outer;
 public:
 	Temp(bool ptr): ptr(ptr) {
 		kind = OP_TEMP;
 		tempIdx = temps.size();
 		temps.emplace_back(this);
-		assignCount = refCount = 0;
+		outer = false;
 	}
 
 	string display() {
@@ -64,8 +67,9 @@ public:
 	}
 
 	bool isPtr() { return ptr; }
-	void assign() { ++assignCount; }
-	void ref() { ++refCount; }
+	void assign(list<InterCode>::iterator it) { assginCode.emplace_back(it); }
+	void ref(list<InterCode>::iterator it) { refCode.emplace_back(it); }
+	void outerRef() { outer = true; }
 };
 
 
@@ -160,7 +164,7 @@ public:
 	void debug();
 	void optimize();
 	bool optimizeOneRun();
-	static bool optimizeOneBlock(list<InterCode>::iterator, list<InterCode>::iterator);
+	bool optimizeOneBlock(list<InterCode>::iterator, list<InterCode>::iterator);
 };
 
 #endif

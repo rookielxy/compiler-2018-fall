@@ -235,16 +235,16 @@ void CodeBlock::optimize() {
 bool CodeBlock::optimizeOneRun() {
 	bool optimized = false;
 
-	// precompute constant calculation
+	// constant folding
 	for (auto it = code.begin(); it != code.end(); ++it) {
-		switch (it->getType()) {
+		switch (it->kind) {
 			case IR_ADD: case IR_SUB: case IR_MUL: case IR_DIV: {
 				if (it->op1->getType() != OP_CONST or it->op2->getType() != OP_CONST)
 					break;
 				optimized = true;
 				ConstOp *const1 = (ConstOp*)it->op1, *const2 = (ConstOp*)it->op2;
 				int value;
-				switch (it->getType()) {
+				switch (it->kind) {
 					case IR_ADD: value = const1->getValue() + const2->getValue(); break;
 					case IR_SUB: value = const1->getValue() - const2->getValue(); break;
 					case IR_MUL: value = const1->getValue() * const2->getValue(); break;
@@ -257,6 +257,53 @@ bool CodeBlock::optimizeOneRun() {
 				it->kind = IR_ASSIGN;
 				it->op1 = result;
 				it->op2 = nullptr;
+				break;
+			}
+		}
+	}
+
+	/*
+		applying algebraic identity
+		y = x +/- 0 -> y = x
+		y = x * 1   -> 
+		y = x / 1	->
+	*/
+	for (auto it = code.begin(); it != code.end(); ++it) {
+		switch (it->kind) {
+			case IR_ADD: case IR_SUB: case IR_MUL: case IR_DIV: {
+				if (it->op1->getType() != OP_CONST and it->op2->getType() != OP_CONST)
+					break;
+				ConstOp *constOp = (it->op1->getType() == OP_CONST)? 
+									(ConstOp*)it->op1 : (ConstOp*)it->op2;
+				switch (it->kind) {
+					case IR_ADD: case IR_SUB:
+						if (constOp->getValue() == 0) {
+							optimized = true;
+							it->kind = IR_ASSIGN;
+							it->op1 = (it->op1->getType() == OP_CONST)? it->op2 : it->op1;
+							it->op2 = nullptr;
+							delete constOp;
+						}
+						break;
+					case IR_MUL:
+						if (constOp->getValue() == 1) {
+							optimized = true;
+							it->kind = IR_ASSIGN;
+							it->op1 = (it->op1->getType() == OP_CONST)? it->op2 : it->op1;
+							it->op2 = nullptr;
+							delete constOp; 
+						}
+						break;
+					case IR_DIV:
+						if (it->op2->getType() == OP_CONST and ((ConstOp*)it->op2)->getValue() == 1) {
+							optimized = true;
+							it->kind = IR_ASSIGN;
+							delete it->op2;
+							it->op2 = nullptr;
+						}
+						break;
+					default: assert(false);
+				}
 				break;
 			}
 		}
@@ -298,6 +345,7 @@ bool CodeBlock::optimizeOneRun() {
 }
 
 bool CodeBlock::optimizeOneBlock(list<InterCode>::iterator begin, list<InterCode>::iterator end) {
+	bool optimized = false;
 	auto it = begin;
 	vector<Temp*> temps;
 	while (it != end) {
@@ -311,31 +359,31 @@ bool CodeBlock::optimizeOneBlock(list<InterCode>::iterator begin, list<InterCode
 		switch (it->kind) {
 			case IR_ASSIGN: case IR_ADDR:
 			case IR_RSTAR:
-				it->result->assign();
-				it->op1->ref();
+				it->result->assign(it);
+				it->op1->ref(it);
 				break;
 			case IR_CALL: case IR_READ:
-				it->result->assign();
+				it->result->assign(it);
 				break;
 			case IR_LSTAR:
-				it->result->ref();
-				it->op1->ref();
+				it->result->ref(it);
+				it->op1->ref(it);
 				break;
 			case IR_ADD: case IR_SUB:
 			case IR_MUL: case IR_DIV:
-				it->result->assign();
-				it->op1->ref();
-				it->op2->ref();
+				it->result->assign(it);
+				it->op1->ref(it);
+				it->op2->ref(it);
 				break;
 			case IR_RETURN: case IR_ARGS:
 			case IR_WRITE:
-				it->result->ref();
+				it->result->ref(it);
 				break;
 			case IR_RELOP_EQ: case IR_RELOP_NEQ:
 			case IR_RELOP_LT: case IR_RELOP_GT:
 			case IR_RELOP_LE: case IR_RELOP_GE:
-				it->op1->ref();
-				it->op2->ref();
+				it->op1->ref(it);
+				it->op2->ref(it);
 				break;
 			case IR_GOTO: case IR_DEC:
 			case IR_PARAM:
@@ -346,5 +394,31 @@ bool CodeBlock::optimizeOneBlock(list<InterCode>::iterator begin, list<InterCode
 		}
 		++it;
 	}
+	
+	// check whether there is outer basic block reference or not
+	while (it != code.end()) {
+		if (it->op1 != nullptr)
+			it->op1->outerRef();
+		if (it->op2 != nullptr)
+			it->op2->outerRef();
+		if (it->result != nullptr)
+			it->result->outerRef();
+		++it;
+	}
 
+	for (auto ptr : temps) {
+		if (ptr->outer)
+			continue;
+		assert(ptr->assginCode.empty());
+		if (ptr->assginCode.size() > 1)
+			continue;
+		if (ptr->refCode.empty()) {
+			optimized = true;
+			code.erase(ptr->assginCode[0]);
+		} else if (ptr->refCode.size() == 1) {
+			optimized = true;
+			
+		}
+	}
+	return optimized;
 }
