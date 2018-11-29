@@ -13,7 +13,6 @@ t4 := op
 t5 := op + #4
 *t5 := #2
 ARG op
-t6 := CALL add
-n := t6
+n := CALL add
 WRITE n
 RETURN #0

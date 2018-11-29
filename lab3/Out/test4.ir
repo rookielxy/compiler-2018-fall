@@ -20,21 +20,19 @@ t4 := j * #4
 t5 := op + t4
 t6 := i + j
 *t5 := t6
-t7 := j + #1
-j := t7
+j := j + #1
 GOTO label3
 LABEL label2 :
-t8 := i * #4
-t9 := r + t8
+t7 := i * #4
+t8 := r + t7
 ARG op
-t10 := CALL add
-*t9 := t10
-t11 := i * #4
-t12 := r + t11
-t13 := *t12
-WRITE t13
-t14 := i + #1
-i := t14
+t9 := CALL add
+*t8 := t9
+t10 := i * #4
+t11 := r + t10
+t12 := *t11
+WRITE t12
+i := i + #1
 j := #0
 GOTO label1
 LABEL label0 :

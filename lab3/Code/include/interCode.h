@@ -167,6 +167,7 @@ public:
 	void optimize();
 	bool optimizeOneRun();
 	bool optimizeOneBlock(list<InterCode>::iterator, list<InterCode>::iterator);
+	void redirectResult(Operand *redir);
 };
 
 #endif

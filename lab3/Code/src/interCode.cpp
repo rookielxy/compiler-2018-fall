@@ -57,6 +57,11 @@ InterCode::InterCode(enum interCodeType kind, Operand *op1, Operand *op2):
 			this->op1 = op1;
 			this->op2 = op2;
 			break;
+		case IR_RSTAR:
+			assert(not op1->isPtr() and op2->isPtr());
+			result = op1;
+			this->op1 = op2;
+			break;
 		default: cout << kind << endl; assert(false);
 	}
 }
@@ -213,6 +218,13 @@ void CodeBlock::append(const InterCode &toAdd) {
 
 Operand* CodeBlock::getResult() {
 	return code.back().getResult();
+}
+
+void CodeBlock::redirectResult(Operand *redir) {
+	assert(code.back().result->getType() == OP_TEMP);
+	Temp::removeTemp((Temp*)code.back().result);
+	delete code.back().result;
+	code.back().result = redir;
 }
 
 void CodeBlock::display() {

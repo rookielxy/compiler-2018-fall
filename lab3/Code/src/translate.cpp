@@ -239,16 +239,43 @@ CodeBlock AstNode::translateExp() {
 					*y = code2.getResult();
 			code.append(code1);
 			code.append(code2);
-			if (y->isPtr()) {
+			if (x->isPtr() and y->isPtr()) {
 				code.append(InterCode(IR_RSTAR, y));
-				y = code.getResult();
-			}
-
-			if (x->isPtr())
+				code.append(InterCode(IR_LSTAR, x, code.getResult()));
+			} else if (x->isPtr()) {
 				code.append(InterCode(IR_LSTAR, x, y));
-			else
+			} else if (y->isPtr()) {
+				code.append(InterCode(IR_RSTAR, x, y));
+			} else {
+#ifndef IR_OPTIMIZE
 				code.append(InterCode(IR_ASSIGN, x, y));
-				
+#else
+				if (expr2->attr == NEST_EXP) {
+					while (expr2->attr == NEST_EXP)
+						expr2 = expr2->first_child->first_sibling;
+				}
+				switch (expr2->attr) {
+					case PLUS_EXP: case MINUS_EXP:
+					case STAR_EXP: case DIV_EXP:
+					case NEG_EXP:
+					case FUNC_EMPTY_EXP:
+						code.redirectResult(x);
+						break;
+					case FUNC_ARGS_EXP: {
+						AstNode *funId = expr2->first_child;
+						assert(funId->str != "write");
+						code.redirectResult(x);
+						break;
+					}
+					case ID_EXP: case INT_EXP:
+						code.append(InterCode(IR_ASSIGN, x, y));
+						break;
+					case STRUCT_EXP: case ARRAY_EXP:
+					case NEST_EXP:
+					default: cout << expr2->attr << endl; assert(false);
+				}
+#endif
+			}
 			break;
 		}
 		case PLUS_EXP: case MINUS_EXP:

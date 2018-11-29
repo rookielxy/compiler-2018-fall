@@ -1,6 +1,5 @@
 FUNCTION main :
-READ t0
-n := t0
+READ n
 IF n <= #0 GOTO label2
 WRITE #1
 GOTO label0

@@ -9,12 +9,10 @@ t1 := CALL fact
 t2 := n * t1
 RETURN t2
 FUNCTION main :
-READ t3
-m := t3
+READ m
 IF m <= #1 GOTO label3
 ARG m
-t4 := CALL fact
-result := t4
+result := CALL fact
 GOTO label2
 LABEL label3 :
 result := #1
