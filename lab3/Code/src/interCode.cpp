@@ -26,10 +26,13 @@ InterCode::InterCode(enum interCodeType kind, Operand *op):
 			break;
 		case IR_EMPTY: 
 		case IR_DEC: case IR_BASIC_DEC:
-		case IR_PARAM: case IR_WRITE:
+		case IR_PARAM: 
 		case IR_GOTO: case IR_LABEL: case IR_FUNC: 
 		case IR_RETURN: case IR_ARGS:
 			result = op;
+			break;
+		case IR_WRITE:
+			op1 = op;
 			break;
 		default: cout << kind << endl; assert(false);
 	}
@@ -155,7 +158,7 @@ void InterCode::display() {
 			cout << "READ " << result->display() << endl;
 			break;
 		case IR_WRITE:
-			cout << "WRITE " << result->display() << endl;
+			cout << "WRITE " << op1->display() << endl;
 			break;
 		case IR_RELOP_EQ: case IR_RELOP_NEQ:
 		case IR_RELOP_GE: case IR_RELOP_LE:
@@ -230,6 +233,7 @@ void CodeBlock::optimize() {
 			++it;
 	}
 	while (optimizeOneRun());
+	Temp::reIndex();
 }
 
 bool CodeBlock::optimizeOneRun() {
@@ -315,7 +319,7 @@ bool CodeBlock::optimizeOneRun() {
 		blockStart = blockEnd;
 		while (blockStart != code.end()) {
 			enum interCodeType type = blockStart->kind;
-			if (type == IR_FUNC or type == IR_LABEL)
+			if (type == IR_FUNC or type == IR_LABEL or type == IR_GOTO)
 				++blockStart;
 			else
 				break;
@@ -327,97 +331,55 @@ bool CodeBlock::optimizeOneRun() {
 		bool endWithRelop = false;
 		while (blockEnd != code.end()) {
 			enum interCodeType type = blockEnd->kind;
-			if (type == IR_FUNC or type == IR_LABEL)
+			if (type == IR_FUNC or type == IR_LABEL or type == IR_GOTO)
 				break;
-			if ((type >= IR_RELOP_LE and type <= IR_RELOP_LE) or
-				type == IR_GOTO)
+			if (type >= IR_RELOP_EQ and type <= IR_RELOP_LE)
 				endWithRelop = true;
 			else
 				if(endWithRelop) break;
 			++blockEnd;
 		}
+		
+		if(optimizeOneBlock(blockStart, blockEnd))
+			optimized = true;
 		if (blockEnd == code.end())
-				break;
+			break;
 
-		optimized = optimized or optimizeOneBlock(blockStart, blockEnd);
 	}
 	return optimized;
 }
 
 bool CodeBlock::optimizeOneBlock(list<InterCode>::iterator begin, list<InterCode>::iterator end) {
 	bool optimized = false;
-	auto it = begin;
-	vector<Temp*> temps;
-	while (it != end) {
-		if (it->op1 != nullptr and it->op1->getType() == OP_TEMP)
-			temps.emplace_back((Temp*)it->op1);
-		if (it->op2 != nullptr and it->op2->getType() == OP_TEMP)
-			temps.emplace_back((Temp*)it->op2);
-		if (it->result != nullptr and it->result->getType() == OP_TEMP)
-			temps.emplace_back((Temp*)it->result);
-
+	for (auto it = begin; it != end; ) {
 		switch (it->kind) {
-			case IR_ASSIGN: case IR_ADDR:
-			case IR_RSTAR:
-				it->result->assign(it);
-				it->op1->ref(it);
+			case IR_ASSIGN: {
+				if (it->result->getType() != OP_TEMP) {
+					++it;
+					break;
+				}
+				bool findRef = false;
+				auto nxt = it;
+				++nxt;
+				for (; nxt != end; ++nxt) {
+					if (nxt->op1 == it->result or nxt->op2 == it->result) {
+						findRef = true;
+						nxt->op1 = (nxt->op1 == it->result)? it->op1 : nxt->op1;
+						nxt->op2 = (nxt->op2 == it->result)? it->op1 : nxt->op2;
+					}
+				}
+				if (findRef) {
+					optimized = true;
+					Temp::removeTemp((Temp*)it->result);
+					delete it->result;
+					it->result = nullptr;
+					it = code.erase(it);
+				} else {
+					++it;
+				}
 				break;
-			case IR_CALL: case IR_READ:
-				it->result->assign(it);
-				break;
-			case IR_LSTAR:
-				it->result->ref(it);
-				it->op1->ref(it);
-				break;
-			case IR_ADD: case IR_SUB:
-			case IR_MUL: case IR_DIV:
-				it->result->assign(it);
-				it->op1->ref(it);
-				it->op2->ref(it);
-				break;
-			case IR_RETURN: case IR_ARGS:
-			case IR_WRITE:
-				it->result->ref(it);
-				break;
-			case IR_RELOP_EQ: case IR_RELOP_NEQ:
-			case IR_RELOP_LT: case IR_RELOP_GT:
-			case IR_RELOP_LE: case IR_RELOP_GE:
-				it->op1->ref(it);
-				it->op2->ref(it);
-				break;
-			case IR_GOTO: case IR_DEC:
-			case IR_PARAM:
-				break;
-			case IR_LABEL: case IR_FUNC:
-			case IR_EMPTY: case IR_BASIC_DEC:
-			default: cout << it->kind << endl; assert(false);
-		}
-		++it;
-	}
-	
-	// check whether there is outer basic block reference or not
-	while (it != code.end()) {
-		if (it->op1 != nullptr)
-			it->op1->outerRef();
-		if (it->op2 != nullptr)
-			it->op2->outerRef();
-		if (it->result != nullptr)
-			it->result->outerRef();
-		++it;
-	}
-
-	for (auto ptr : temps) {
-		if (ptr->outer)
-			continue;
-		assert(ptr->assginCode.empty());
-		if (ptr->assginCode.size() > 1)
-			continue;
-		if (ptr->refCode.empty()) {
-			optimized = true;
-			code.erase(ptr->assginCode[0]);
-		} else if (ptr->refCode.size() == 1) {
-			optimized = true;
-			
+			}
+			default: ++it;
 		}
 	}
 	return optimized;

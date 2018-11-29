@@ -28,6 +28,7 @@ enum interCodeType {
 	IR_READ, IR_WRITE
 };
 
+class InterCode;
 
 class Operand {
 protected:
@@ -37,9 +38,6 @@ public:
 	enum operandType getType() { return kind; };
 	virtual string display() = 0;
 	virtual bool isPtr() { return false; }
-	virtual void assign(list<InterCode>::iterator) {}
-	virtual void ref(list<InterCode>::iterator) {}
-	virtual void outerRef() {}
 };
 
 
@@ -50,26 +48,30 @@ class Temp : public Operand {
 
 	int tempIdx;
 	bool ptr;
-	
-	vector<list<InterCode>::iterator> assginCode;
-	vector<list<InterCode>::iterator> refCode;
-	bool outer;
 public:
 	Temp(bool ptr): ptr(ptr) {
 		kind = OP_TEMP;
 		tempIdx = temps.size();
 		temps.emplace_back(this);
-		outer = false;
 	}
 
-	string display() {
-		return "t" + to_string(tempIdx);
+	string display() { return "t" + to_string(tempIdx); }
+
+	static void reIndex() {
+		for (int i = 0; i < temps.size(); ++i)
+			temps[i]->tempIdx = i;
 	}
 
 	bool isPtr() { return ptr; }
-	void assign(list<InterCode>::iterator it) { assginCode.emplace_back(it); }
-	void ref(list<InterCode>::iterator it) { refCode.emplace_back(it); }
-	void outerRef() { outer = true; }
+
+	static void removeTemp(Temp *temp) {
+		for (auto it = temps.begin(); it != temps.end(); ++it) {
+			if (*it == temp) {
+				temps.erase(it);
+				return;
+			}
+		}
+	}
 };
 
 

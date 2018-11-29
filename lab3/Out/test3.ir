@@ -1,20 +1,19 @@
 FUNCTION add :
 PARAM temp
-t0 := temp + #0
+t1 := *temp
+t0 := temp + #4
 t2 := *t0
-t1 := temp + #4
-t3 := *t1
-t4 := t2 + t3
-RETURN t4
+t3 := t1 + t2
+RETURN t3
 FUNCTION main :
 DEC op_var 8
 op := &op_var
-t5 := op + #0
-*t5 := #1
-t6 := op + #4
-*t6 := #2
+t4 := op
+*t4 := #1
+t5 := op + #4
+*t5 := #2
 ARG op
-t7 := CALL add
-n := t7
+t6 := CALL add
+n := t6
 WRITE n
 RETURN #0
