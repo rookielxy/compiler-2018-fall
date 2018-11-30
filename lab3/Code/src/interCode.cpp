@@ -28,10 +28,10 @@ InterCode::InterCode(enum interCodeType kind, Operand *op):
 		case IR_DEC: case IR_BASIC_DEC:
 		case IR_PARAM: 
 		case IR_GOTO: case IR_LABEL: case IR_FUNC: 
-		case IR_RETURN: case IR_ARGS:
+		case IR_RETURN:
 			result = op;
 			break;
-		case IR_WRITE:
+		case IR_WRITE: case IR_ARGS:
 			op1 = op;
 			break;
 		default: cout << kind << endl; assert(false);
@@ -42,9 +42,13 @@ InterCode::InterCode(enum interCodeType kind, Operand *op1, Operand *op2):
 			kind(kind), op1(nullptr), op2(nullptr), result(nullptr) {
 	switch (kind) {
 		case IR_DEC: case IR_ADDR:
-		case IR_ASSIGN: case IR_LSTAR:
+		case IR_ASSIGN: 
 			result = op1;
 			this->op1 = op2;
+			break;
+		case IR_LSTAR:
+			this->op1 = op1;
+			this->op2 = op2;
 			break;
 		case IR_ADD: case IR_SUB: 
 			result = new Temp(op1->isPtr() or op2->isPtr());
@@ -148,8 +152,8 @@ void InterCode::display() {
 				<< op1->display() << endl;
 			break;
 		case IR_LSTAR:
-			cout << "*" << result->display() << " := "
-				<< op1->display() << endl;
+			cout << "*" << op1->display() << " := "
+				<< op2->display() << endl;
 			break;
 		case IR_RSTAR:
 			cout << result->display() << " := "
@@ -184,7 +188,7 @@ void InterCode::display() {
 			cout << "RETURN " << result->display() << endl;
 			break;
 		case IR_ARGS:
-			cout << "ARG " << result->display() << endl;
+			cout << "ARG " << op1->display() << endl;
 			break;
 		case IR_PARAM:
 			cout << "PARAM " << result->display() << endl;
@@ -221,10 +225,14 @@ Operand* CodeBlock::getResult() {
 }
 
 void CodeBlock::redirectResult(Operand *redir) {
-	assert(code.back().result->getType() == OP_TEMP);
-	Temp::removeTemp((Temp*)code.back().result);
-	delete code.back().result;
-	code.back().result = redir;
+	assert((code.back().getType() == IR_EMPTY) or (getResult()->getType() == OP_TEMP));
+	if (code.back().getType() == IR_EMPTY) {
+		append(InterCode(IR_ASSIGN, redir, getResult()));
+	} else {
+		Temp::removeTemp((Temp*)code.back().result);
+		delete code.back().result;
+		code.back().result = redir;
+	}
 }
 
 void CodeBlock::display() {

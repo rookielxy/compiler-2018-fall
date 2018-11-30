@@ -70,11 +70,13 @@ Type AstNode::parseSpecifier() {
 void AstNode::parseExtDecList(const Type &type) {
     assert(tag == TAG_EXT_DEC_LIST);
     AstNode *extDecList = this, *varDec = first_child;
-    while (varDec->first_sibling != nullptr) {
+    while (true) {
         auto symbol = Symbol(varDec, type);
         symTable.defineSymbol(symbol);
         varDec->type = new Type(symbol.getType());
         varDec->str = symbol.getName();
+        if (varDec->first_sibling == nullptr)
+            break;
         extDecList = varDec->first_sibling->first_sibling;
         varDec = extDecList->first_child;
     }
@@ -162,7 +164,7 @@ vector<Symbol> AstNode::parseVarList() {
         param->str = symbol.getName();
         if (param->first_sibling == nullptr)
             break;
-        param = param->first_sibling->first_child;
+        param = param->first_sibling->first_sibling->first_child;
     }
     return result;
 }

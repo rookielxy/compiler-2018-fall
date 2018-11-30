@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <stack>
 #include <list>
 #include <map>
 #include <algorithm>

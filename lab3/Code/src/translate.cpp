@@ -74,7 +74,7 @@ CodeBlock AstNode::translateVarList() {
 		code.append(InterCode(IR_PARAM, symbol));
 		if (paramDec->first_sibling == nullptr)
 			break;
-		varList = paramDec->first_sibling;
+		varList = paramDec->first_sibling->first_sibling;
 		paramDec = varList->first_child;
 	}
 	return code;
@@ -215,7 +215,7 @@ CodeBlock AstNode::translateDec() {
 				CodeBlock expCode = expr->translateExp();
 				InterCode assign = InterCode(IR_ASSIGN, code.getResult(), expCode.getResult());
 				ret.append(expCode);
-				ret.append(assign);
+				ret.redirectResult(code.getResult());
 			} else {
 				assert(false);						// assign structure or array not supported
 			}
@@ -227,7 +227,7 @@ CodeBlock AstNode::translateDec() {
 }
 
 CodeBlock AstNode::translateExp() {
-	assert(tag = TAG_EXP);
+	assert(tag == TAG_EXP);
 	CodeBlock code;
 	switch (attr) {
 		case ASSIGN_EXP: {
@@ -315,6 +315,10 @@ CodeBlock AstNode::translateExp() {
 			AstNode *expr = first_child->first_sibling;
 			CodeBlock code1 = expr->translateExp();
 			Operand *x = code1.getResult();
+			if (x->isPtr()) {
+				code.append(InterCode(IR_RSTAR, x));
+				x = code.getResult();
+			}
 			auto zero = new ConstOp(0);
 			
 			code.append(code1);
@@ -452,7 +456,15 @@ CodeBlock AstNode::translateCondExp(Label *labelTrue, Label *labelFalse) {
 					code2 = expr2->translateExp();
 			Operand *x = code1.getResult(), *y = code2.getResult();
 			code.append(code1);
+			if (x->isPtr()) {
+				code.append(InterCode(IR_RSTAR, x));
+				x = code.getResult();
+			}
 			code.append(code2);
+			if (y->isPtr()) {
+				code.append(InterCode(IR_RSTAR, y));
+				y = code.getResult();
+			}
 
 			enum interCodeType relopType = relop->relopType();
 
@@ -516,7 +528,9 @@ CodeBlock AstNode::translateLoop(Label *next) {
 	assert(attr == WHILE_STMT);
 	CodeBlock code;
 	AstNode *expr = first_child->first_sibling->first_sibling;
-	assert(expr->attr == REL_EXP);
+	assert(expr->attr == REL_EXP or expr->attr == AND_EXP or
+		expr->attr == OR_EXP or expr->attr == NOT_EXP or
+		expr->attr == NEST_EXP);
 
 	auto begin = new Label();
 
@@ -535,13 +549,18 @@ CodeBlock AstNode::translateArgs() {
 	assert(tag == TAG_ARGS);
 	CodeBlock code;
 	AstNode *args = this, *expr = first_child;
+	stack<InterCode> codeStack;
 	while (true) {
 		code.append(expr->translateExp());
-		code.append(InterCode(IR_ARGS, code.getResult()));
+		codeStack.push(InterCode(IR_ARGS, code.getResult()));
 		if (expr->first_sibling == nullptr)
 			break;
-		args = expr->first_sibling;
+		args = expr->first_sibling->first_sibling;
 		expr = args->first_child;
+	}
+	while (not codeStack.empty()) {
+		code.append(codeStack.top());
+		codeStack.pop();
 	}
 	return code;
 }
