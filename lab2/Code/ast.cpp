@@ -252,7 +252,7 @@ vector<Symbol> AstNode::parseVarList() {
         result.emplace_back(Symbol(param));
         if (param->first_sibling == nullptr)
             break;
-        param = param->first_sibling->first_child;
+        param = param->first_sibling->first_sibling->first_child;
     }
     return result;
 }
