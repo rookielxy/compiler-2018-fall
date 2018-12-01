@@ -226,6 +226,55 @@ CodeBlock AstNode::translateDec() {
 	return ret;
 }
 
+CodeBlock AstNode::translateLeftExp() {
+	assert(tag == TAG_EXP);
+	CodeBlock code;
+	switch (attr) {
+		case INT_EXP: {
+			AstNode *intNode = first_child;
+			code.append(InterCode(IR_EMPTY, new ConstOp(intNode->ival)));
+			break;
+		}
+		case ID_EXP: {
+			AstNode *id = first_child;
+			auto symOp = new SymbolOp(id->str, type->isBasic());
+			code.append(InterCode(IR_EMPTY, symOp));
+			break;
+		}
+		case STRUCT_EXP: {
+			AstNode *expr = first_child, 
+					*id = expr->first_sibling->first_sibling;
+			CodeBlock code1 = expr->translateExp();
+			Operand *x = code1.getResult();
+			code.append(code1);
+
+			auto offset = new ConstOp(expr->type->getFieldOffset(id->str));
+			code.append(InterCode(IR_ADD, x, offset));
+
+			break;
+		}
+		case ARRAY_EXP: {
+			AstNode *expr1 = first_child,
+					*expr2 = expr1->first_sibling->first_sibling;
+			CodeBlock code1 = expr1->translateExp(),
+					code2 = expr2->translateExp();
+			Operand *x = code1.getResult(), *y = code2.getResult();
+			code.append(code1);
+			code.append(code2);
+
+			auto eleSz = new ConstOp(expr1->type->arrayElemType().getTypeSize());
+			InterCode offset = InterCode(IR_MUL, y, eleSz);
+			code.append(offset);
+			code.append(InterCode(IR_ADD, x, offset.getResult()));
+			break;
+		}
+		default: cout << attr << endl; assert(false);
+	}
+	
+	return code;
+}
+
+
 CodeBlock AstNode::translateExp() {
 	assert(tag == TAG_EXP);
 	CodeBlock code;
@@ -233,8 +282,13 @@ CodeBlock AstNode::translateExp() {
 		case ASSIGN_EXP: {
 			AstNode *expr1 = first_child,
 					*expr2 = expr1->first_sibling->first_sibling;
+#ifndef IR_OPTIMIZE
+			CodeBlock code1 = expr1->translateLeftExp(),
+					code2 = expr2->translateExp();
+#else
 			CodeBlock code1 = expr1->translateExp(),
 					code2 = expr2->translateExp();
+#endif
 			Operand *x = code1.getResult(),
 					*y = code2.getResult();
 			code.append(code1);
@@ -334,15 +388,21 @@ CodeBlock AstNode::translateExp() {
 		}
 		case INT_EXP: {
 			AstNode *intNode = first_child;
-			InterCode line = InterCode(IR_EMPTY, new ConstOp(intNode->ival));
-			code.append(line);
+#ifndef IR_OPTIMIZE
+			code.append(InterCode(IR_ASSIGN, new ConstOp(intNode->ival)));
+#else
+			code.append(InterCode(IR_EMPTY, new ConstOp(intNode->ival)));
+#endif
 			break;
 		}
 		case ID_EXP: {
 			AstNode *id = first_child;
 			auto symOp = new SymbolOp(id->str, type->isBasic());
-			InterCode line = InterCode(IR_EMPTY, symOp);
-			code.append(line);
+#ifndef IR_OPTIMIZE
+			code.append(InterCode(IR_ASSIGN, symOp));
+#else
+			code.append(InterCode(IR_EMPTY, symOp));
+#endif
 			break;
 		}
 		case STRUCT_EXP: {
@@ -370,7 +430,6 @@ CodeBlock AstNode::translateExp() {
 			InterCode offset = InterCode(IR_MUL, y, eleSz);
 			code.append(offset);
 			code.append(InterCode(IR_ADD, x, offset.getResult()));
-
 			break;
 		}
 		case FUNC_EMPTY_EXP: {

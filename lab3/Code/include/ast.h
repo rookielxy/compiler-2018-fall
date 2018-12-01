@@ -84,6 +84,7 @@ public:
     CodeBlock translateDef();
     CodeBlock translateDec();
     CodeBlock translateExp();
+    CodeBlock translateLeftExp();
     CodeBlock translateStmt(Label *next);
     CodeBlock translateCondStmt(Label *next);
     CodeBlock translateCondExp(Label *labelTrue, Label *labelFalse);

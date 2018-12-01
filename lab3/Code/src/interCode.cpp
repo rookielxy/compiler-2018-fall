@@ -20,6 +20,10 @@ InterCode::InterCode(enum interCodeType kind, Operand *op):
 			result = new Temp(false);
 			op1 = op;
 			break;
+		case IR_ASSIGN:
+			result = new Temp(op->isPtr());
+			op1 = op;
+			break;
 		case IR_ADDR:
 			result = new Temp(true);
 			op1 = op;

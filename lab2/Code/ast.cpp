@@ -166,8 +166,10 @@ Type AstNode::parseSpecifier() {
 void AstNode::parseExtDecList(const Type &type) {
     assert(tag == TAG_EXT_DEC_LIST);
     AstNode *extDecList = this, *varDec = first_child;
-    while (varDec->first_sibling != nullptr) {
+    while (true) {
         symTable.defineSymbol(Symbol(varDec, type));
+        if (varDec->first_sibling == nullptr)
+            break;
         extDecList = varDec->first_sibling->first_sibling;
         varDec = extDecList->first_child;
     }
