@@ -203,7 +203,7 @@ void AstNode::parseDecList(vector<Symbol> &symbols, const Type &type, bool assig
         auto symbol = Symbol(varDec, type);
 
         if (assign) {
-            symbols.emplace_back(symbol);
+            symTable.defineSymbol(symbol);
             if (dec->attr == ASSIGN_DEC) {
                 AstNode *exp = varDec->first_sibling->first_sibling;
                 auto temp = exp->parseExp();
@@ -262,9 +262,7 @@ void AstNode::parseCompSt(const Type &retType) {
     AstNode *defList = first_child->first_sibling,
             *stmtList = defList->first_sibling,
             *stmt = stmtList->first_child;
-    vector<Symbol> symbols = defList->parseDefList(true);
-    for (auto ele: symbols)
-        symTable.defineSymbol(ele);
+    defList->parseDefList(true);
 
     while(stmtList->tag != TAG_EMPTY) {
         stmt->parseStmt(retType);
