@@ -1,0 +1,11 @@
+FUNCTION main :
+i := #0
+sum := #0
+LABEL label1 :
+IF i > #10 GOTO label0
+sum := sum + i
+i := i + #1
+GOTO label1
+LABEL label0 :
+WRITE sum
+RETURN #0

@@ -99,9 +99,7 @@ public:
 		this->value = value;
 	}
 
-	string display() {
-		return "#" + to_string(value);
-	}
+	string display() { return "#" + to_string(value); }
 
 	int getValue() { return value; }
 };
