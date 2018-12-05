@@ -91,6 +91,7 @@ ParamDec: Specifier VarDec                      { $$ = newAst(TAG_PARAM_DEC, 2, 
 
 /* Statements */
 CompSt: LC DefList StmtList RC                  { $$ = newAst(TAG_COMPST, 4, $1, $2, $3, $4); }
+    | LC DefList StmtList error                 { $$ = newAst(TAG_ERROR, 4, $1, $2, $3, $4); syntaxCorrect = false; }
     ;
 StmtList: Stmt StmtList                         { $$ = newAst(TAG_STMT_LIST, 2, $1, $2); }
     | /* empty */                               { $$ = newAst(TAG_EMPTY, 0); }
@@ -101,10 +102,10 @@ Stmt: Exp SEMI                                  { $$ = newAst(TAG_STMT, 2, $1, $
     | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE	{ $$ = newAst(TAG_STMT, 5, $1, $2, $3, $4, $5); }
     | IF LP Exp RP Stmt ELSE Stmt               { $$ = newAst(TAG_STMT, 7, $1, $2, $3, $4, $5, $6, $7); }
     | WHILE LP Exp RP Stmt                      { $$ = newAst(TAG_STMT, 5, $1, $2, $3, $4, $5); }
-    | error SEMI                                { $$ = newAst(TAG_ERROR, 2, $1, $2); $$->error_type = 1; syntaxCorrect = false; }
+    | error SEMI                                { $$ = newAst(TAG_ERROR, 2, $1, $2); syntaxCorrect = false; }
+    | error CompSt                              { $$ = newAst(TAG_ERROR, 2, $1, $2); syntaxCorrect = false; }    
     | WHILE LP error RP Stmt                    { $$ = newAst(TAG_ERROR, 5, $1, $2, $3, $4, $5); $$->error_type = 3; syntaxCorrect = false; }
     | RETURN error SEMI                         { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 14; syntaxCorrect = false; }
-
     ;
 
 /* Local Definitions */
@@ -113,6 +114,7 @@ DefList: Def DefList                            { $$ = newAst(TAG_DEF_LIST, 2, $
     ;
 Def:  Specifier DecList SEMI                    { $$ = newAst(TAG_DEF, 3, $1, $2, $3); }
     | Specifier error SEMI                      { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 4; /*reportError($$, yylineno);*/ syntaxCorrect = false; }
+    | Specifier error                           { $$ = newAst(TAG_ERROR, 2, $1, $2); syntaxCorrect = false; }
     //| Specifier DecList error                   { $$ = newAst(TAG_ERROR, 3, $1, $2, $3); $$->error_type = 2; /*reportError($$, yylineno);*/ syntaxCorrect = false; }
     ;
 DecList: Dec                                    { $$ = newAst(TAG_DEC_LIST, 1, $1); }

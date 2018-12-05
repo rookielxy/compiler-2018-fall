@@ -105,7 +105,6 @@ Stmt: Exp SEMI                                  { $$ = new AstNode(TAG_STMT, 2, 
     | error SEMI                                { $$ = new AstNode(TAG_ERROR, 2, $1, $2); syntaxCorrect = false; }
     | WHILE LP error RP Stmt                    { $$ = new AstNode(TAG_ERROR, 5, $1, $2, $3, $4, $5); syntaxCorrect = false; }
     | RETURN error SEMI                         { $$ = new AstNode(TAG_ERROR, 3, $1, $2, $3); syntaxCorrect = false; }
-
     ;
 
 /* Local Definitions */
