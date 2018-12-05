@@ -285,6 +285,8 @@ void AstNode::parseStmt(const Type &retType) {
         case RETURN_STMT: {
             AstNode *exp = first_child->first_sibling;
             auto type = exp->parseExp();
+            if (type.isError())
+                break;
             if (not (type == retType)) {
                 string msg = "Type mismatched for return";
                 reportError(8, msg, exp->line_no);
@@ -304,7 +306,8 @@ void AstNode::parseStmt(const Type &retType) {
                     *stmt2 = stmt1->first_sibling->first_sibling;
             exp->parseExp();
             stmt1->parseStmt(retType);
-            stmt2->parseStmt(retType);            
+            stmt2->parseStmt(retType);
+            break;            
         }
         default: assert(false);
     }

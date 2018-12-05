@@ -1,3 +1,0 @@
-int func(int i) {
-	i = 1;
-}

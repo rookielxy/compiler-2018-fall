@@ -1,3 +1,0 @@
-int func(int temp[20]) {
-	temp[1] = 0;
-}

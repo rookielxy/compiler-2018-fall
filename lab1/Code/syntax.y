@@ -91,7 +91,6 @@ ParamDec: Specifier VarDec                      { $$ = newAst(TAG_PARAM_DEC, 2, 
 
 /* Statements */
 CompSt: LC DefList StmtList RC                  { $$ = newAst(TAG_COMPST, 4, $1, $2, $3, $4); }
-    | LC DefList StmtList error                 { $$ = newAst(TAG_ERROR, 4, $1, $2, $3, $4); syntaxCorrect = false; }
     ;
 StmtList: Stmt StmtList                         { $$ = newAst(TAG_STMT_LIST, 2, $1, $2); }
     | /* empty */                               { $$ = newAst(TAG_EMPTY, 0); }

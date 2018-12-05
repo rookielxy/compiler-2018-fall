@@ -102,6 +102,7 @@ Stmt: Exp SEMI                                  { $$ = new AstNode(TAG_STMT, 2, 
     | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE	{ $$ = new AstNode(TAG_STMT, 5, $1, $2, $3, $4, $5); $$->attr = IF_STMT; }
     | IF LP Exp RP Stmt ELSE Stmt               { $$ = new AstNode(TAG_STMT, 7, $1, $2, $3, $4, $5, $6, $7); $$->attr = IF_ELSE_STMT; }
     | WHILE LP Exp RP Stmt                      { $$ = new AstNode(TAG_STMT, 5, $1, $2, $3, $4, $5); $$->attr = WHILE_STMT; }
+    | error CompSt                              { $$ = new AstNode(TAG_ERROR, 2, $1, $2); syntaxCorrect = false; }    
     | error SEMI                                { $$ = new AstNode(TAG_ERROR, 2, $1, $2); syntaxCorrect = false; }
     | WHILE LP error RP Stmt                    { $$ = new AstNode(TAG_ERROR, 5, $1, $2, $3, $4, $5); syntaxCorrect = false; }
     | RETURN error SEMI                         { $$ = new AstNode(TAG_ERROR, 3, $1, $2, $3); syntaxCorrect = false; }
