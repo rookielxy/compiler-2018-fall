@@ -1,0 +1,60 @@
+FUNCTION calculate :
+PARAM class
+sum := #0
+i := #0
+N := #50
+LABEL label1 :
+IF i >= N GOTO label0
+t0 := i * #8
+t1 := class + t0
+t2 := t1 + #4
+t3 := *t2
+sum := sum + t3
+i := i + #1
+GOTO label1
+LABEL label0 :
+t4 := class + #400
+t5 := sum / N
+*t4 := t5
+t6 := sum / N
+RETURN t6
+FUNCTION main :
+DEC school_var 4040
+school := &school_var
+i1 := #0
+j1 := #0
+N1 := #50
+N2 := #10
+LABEL label3 :
+IF i1 >= N2 GOTO label2
+j1 := #0
+LABEL label5 :
+IF j1 >= N1 GOTO label4
+t7 := i1 * #404
+t8 := school + t7
+t9 := j1 * #8
+t10 := t8 + t9
+t11 := t10 + #4
+t12 := j1 * #5
+t13 := i1 + t12
+*t11 := t13
+j1 := j1 + #1
+GOTO label5
+LABEL label4 :
+i1 := i1 + #1
+GOTO label3
+LABEL label2 :
+j1 := #0
+i1 := #0
+LABEL label7 :
+IF i1 >= N2 GOTO label6
+t14 := i1 * #404
+t15 := school + t14
+ARG t15
+t16 := CALL calculate
+j1 := j1 + t16
+i1 := i1 + #1
+GOTO label7
+LABEL label6 :
+WRITE j1
+RETURN #0

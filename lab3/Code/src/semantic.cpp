@@ -116,7 +116,7 @@ void AstNode::parseDecList(vector<Symbol> &symbols, const Type &type, bool outer
             if (dec->attr == ASSIGN_DEC) {
                 AstNode *expr = varDec->first_sibling->first_sibling;
                 expr->parseExp();
-                if (not (*expr->type == type)) {
+                if (expr->type != nullptr and (not (*expr->type == type))) {
                     string msg = "Type mismatched for assignment";
                     reportError(5, msg, varDec->line_no);
                 }
@@ -197,6 +197,8 @@ void AstNode::parseStmt(const Type &retType) {
         case RETURN_STMT: {
             AstNode *expr = first_child->first_sibling;
             expr->parseExp();
+            if (expr->type == nullptr)
+                break;
             if (not (*expr->type == retType)) {
                 string msg = "Type mismatched for return";
                 reportError(8, msg, expr->line_no);

@@ -54,15 +54,35 @@ Type::Type(bool integer) {
 Type::Type(AstNode *varDec, const Type &type) {
     line_no = varDec->line_no;
     assert(varDec->tag == TAG_VAR_DEC or varDec->tag == TAG_ID);
-    varDec = varDec->first_child;
-    if (varDec->tag == TAG_ID) {
+    if (varDec->first_child->tag == TAG_ID) {
         *this = type;
     } else {
         kind = ARRAY;
+        varDec = varDec->first_child;
         AstNode *size = varDec->first_sibling->first_sibling;
-        array.size = size->ival;
-        array.elem = new Type(varDec, type);
-        this->size = array.size*array.elem->getTypeSize();
+        queue<int> dim;
+        while (true) {
+            dim.push(size->ival);
+            varDec = varDec->first_child;
+            if (varDec->first_sibling == nullptr)
+                break;
+            size = varDec->first_sibling->first_sibling;
+        }
+        Type *toAdd = new Type(type);
+        while (not dim.empty()) {
+            Type *newType = nullptr;
+            if (dim.size() == 1)
+                newType = this;
+            else
+                newType = new Type();
+            newType->kind = ARRAY;
+            newType->array.elem = toAdd;
+            newType->array.size = dim.front();
+            newType->size = toAdd->size*newType->array.size;
+            toAdd = newType;
+            dim.pop();
+        }
+
     }
 }
 

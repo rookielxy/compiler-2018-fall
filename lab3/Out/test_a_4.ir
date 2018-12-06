@@ -1,0 +1,58 @@
+FUNCTION main :
+DEC x_var 20
+x := &x_var
+i := #0
+LABEL label1 :
+IF i >= #5 GOTO label0
+t0 := i * #4
+t1 := x + t0
+READ t2
+*t1 := t2
+i := i + #1
+GOTO label1
+LABEL label0 :
+i := #1
+LABEL label3 :
+IF i >= #5 GOTO label2
+j := i
+LABEL label5 :
+IF j <= #0 GOTO label4
+t14 := j - #1
+t15 := t14 * #4
+t16 := x + t15
+t19 := *t16
+t17 := j * #4
+t18 := x + t17
+t20 := *t18
+IF t19 <= t20 GOTO label4
+t3 := j * #4
+t4 := x + t3
+tem := *t4
+t5 := j * #4
+t6 := x + t5
+t7 := j - #1
+t8 := t7 * #4
+t9 := x + t8
+t10 := *t9
+*t6 := t10
+t11 := j - #1
+t12 := t11 * #4
+t13 := x + t12
+*t13 := tem
+j := j - #1
+GOTO label5
+LABEL label4 :
+i := i + #1
+GOTO label3
+LABEL label2 :
+i := #0
+LABEL label7 :
+IF i >= #5 GOTO label6
+t21 := i * #4
+t22 := x + t21
+t23 := *t22
+WRITE t23
+i := i + #1
+GOTO label7
+LABEL label6 :
+RETURN #0

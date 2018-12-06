@@ -87,7 +87,7 @@ CodeBlock AstNode::translateCompSt() {
 	CodeBlock code1 = defList->translateDefList();
 	CodeBlock code2 = stmtList->translateStmtList();
 	code1.append(code2);
-	code1.clearCompstDeadCode();
+	//code1.clearCompstDeadCode();
 	return code1;
 }
 
@@ -158,6 +158,10 @@ CodeBlock AstNode::translateStmt(Label *next) {
 			AstNode *expr = first_child->first_sibling;
 			CodeBlock expCode = expr->translateExp();
 			Operand *expRes = expCode.getResult();
+			if (expRes->isPtr()) {
+				expCode.append(InterCode(IR_RSTAR, expRes));
+				expRes = expCode.getResult();
+			}
 			InterCode retCode = InterCode(IR_RETURN, expRes);
 			expCode.append(retCode);
 			return expCode;
@@ -213,6 +217,8 @@ CodeBlock AstNode::translateDec() {
 			CodeBlock code = varDec->translateVarDec();
 			if (code.getType() == IR_BASIC_DEC) {
 				CodeBlock expCode = expr->translateExp();
+				if (expCode.getResult()->isPtr())
+					expCode.append(InterCode(IR_RSTAR, expCode.getResult()));
 				InterCode assign = InterCode(IR_ASSIGN, code.getResult(), expCode.getResult());
 				ret.append(expCode);
 				ret.redirectResult(code.getResult());
@@ -425,6 +431,10 @@ CodeBlock AstNode::translateExp() {
 			Operand *x = code1.getResult(), *y = code2.getResult();
 			code.append(code1);
 			code.append(code2);
+			if (y->isPtr()) {
+				code.append(InterCode(IR_RSTAR, y));
+				y = code.getResult();
+			}
 
 			auto eleSz = new ConstOp(expr1->type->arrayElemType().getTypeSize());
 			InterCode offset = InterCode(IR_MUL, y, eleSz);
@@ -469,7 +479,6 @@ CodeBlock AstNode::translateCondStmt(Label *next) {
 	assert(attr == IF_STMT or attr == IF_ELSE_STMT);
 	CodeBlock code;
 	AstNode *expr = first_child->first_sibling->first_sibling;
-	assert(expr->attr == REL_EXP);
 
 	AstNode *stmt = expr->first_sibling->first_sibling;
 	CodeBlock stmtCode = stmt->translateStmt(next);
@@ -501,7 +510,7 @@ CodeBlock AstNode::translateCondStmt(Label *next) {
 CodeBlock AstNode::translateCondExp(Label *labelTrue, Label *labelFalse) {
 	assert(tag == TAG_EXP);
 	assert(attr == REL_EXP or attr == NOT_EXP
-			or attr == AND_EXP or attr == OR_EXP);
+			or attr == AND_EXP or attr == OR_EXP or attr == NEST_EXP);
 	assert(labelTrue != nullptr or labelFalse != nullptr);
 			
 	CodeBlock code;
@@ -569,12 +578,16 @@ CodeBlock AstNode::translateCondExp(Label *labelTrue, Label *labelFalse) {
 					break;
 				default: assert(false);
 			}
-
 			break;
 		}
 		case NOT_EXP: {
 			AstNode *expr = first_child->first_sibling;
-			code.append(expr->translateCondExp(labelFalse, labelFalse));
+			code.append(expr->translateCondExp(labelFalse, labelTrue));
+			break;
+		}
+		case NEST_EXP: {
+			AstNode *expr = first_child->first_sibling;
+			code.append(expr->translateCondExp(labelTrue, labelFalse));
 			break;
 		}
 		default: assert(false);
@@ -611,6 +624,8 @@ CodeBlock AstNode::translateArgs() {
 	stack<InterCode> codeStack;
 	while (true) {
 		code.append(expr->translateExp());
+		if (expr->type->isBasic() and code.getResult()->isPtr())
+			code.append(InterCode(IR_RSTAR, code.getResult()));
 		codeStack.push(InterCode(IR_ARGS, code.getResult()));
 		if (expr->first_sibling == nullptr)
 			break;

@@ -1,0 +1,62 @@
+FUNCTION search :
+PARAM target
+DEC x_var 20
+x := &x_var
+i := #0
+LABEL label1 :
+IF i >= #5 GOTO label0
+t0 := i * #4
+t1 := x + t0
+READ t2
+*t1 := t2
+i := i + #1
+GOTO label1
+LABEL label0 :
+left := #0
+right := #4
+LABEL label3 :
+IF left > right GOTO label2
+t3 := left + right
+index := t3 / #2
+t4 := index * #4
+t5 := x + t4
+middle := *t5
+IF middle != target GOTO label4
+RETURN index
+LABEL label4 :
+t6 := left * #4
+t7 := x + t6
+t8 := *t7
+IF middle <= t8 GOTO label8
+t9 := left * #4
+t10 := x + t9
+t11 := *t10
+IF target < t11 GOTO label8
+IF target < middle GOTO label7
+LABEL label8 :
+t12 := left * #4
+t13 := x + t12
+t14 := *t13
+IF middle >= t14 GOTO label6
+t15 := left * #4
+t16 := x + t15
+t17 := *t16
+IF target >= t17 GOTO label9
+IF target >= middle GOTO label6
+LABEL label9 :
+LABEL label7 :
+right := index - #1
+GOTO label5
+LABEL label6 :
+left := index + #1
+LABEL label5 :
+GOTO label3
+LABEL label2 :
+t18 := #-1
+RETURN t18
+FUNCTION main :
+READ n
+ARG n
+t19 := CALL search
+WRITE t19
+RETURN #0
