@@ -1,0 +1,174 @@
+FUNCTION main :
+DEC place_var 32
+place := &place_var
+DEC row_var 32
+row := &row_var
+DEC ldiag_var 32
+ldiag := &ldiag_var
+DEC rdiag_var 32
+rdiag := &rdiag_var
+count := #0
+i := #0
+READ n
+LABEL label1 :
+IF i >= n GOTO label0
+t0 := i * #4
+t1 := place + t0
+*t1 := #-1
+i := i + #1
+GOTO label1
+LABEL label0 :
+i := #0
+cont := #1
+LABEL label3 :
+IF cont != #1 GOTO label2
+IF i != n GOTO label23
+valid := #1
+j := #0
+LABEL label6 :
+IF j >= n GOTO label5
+t2 := j * #4
+t3 := row + t2
+*t3 := #1
+t4 := j * #4
+t5 := ldiag + t4
+*t5 := #1
+t6 := j * #4
+t7 := rdiag + t6
+*t7 := #1
+j := j + #1
+GOTO label6
+LABEL label5 :
+j := #0
+LABEL label8 :
+IF j >= n GOTO label7
+t48 := j * #4
+t49 := place + t48
+t50 := *t49
+t51 := t50 * #4
+t52 := row + t51
+t53 := *t52
+IF t53 != #1 GOTO label17
+t54 := j * #4
+t55 := place + t54
+t56 := *t55
+t57 := t56 * #4
+t58 := ldiag + t57
+t59 := *t58
+IF t59 != #1 GOTO label17
+t60 := j * #4
+t61 := place + t60
+t62 := *t61
+t63 := t62 * #4
+t64 := rdiag + t63
+t65 := *t64
+IF t65 == #1 GOTO label16
+LABEL label17 :
+valid := #0
+j := n
+GOTO label9
+LABEL label16 :
+t8 := j * #4
+t9 := place + t8
+t10 := *t9
+t11 := t10 * #4
+t12 := row + t11
+*t12 := #0
+k := #0
+LABEL label11 :
+t19 := n - #1
+IF k >= t19 GOTO label10
+t13 := k * #4
+t14 := ldiag + t13
+t15 := k + #1
+t16 := t15 * #4
+t17 := ldiag + t16
+t18 := *t17
+*t14 := t18
+k := k + #1
+GOTO label11
+LABEL label10 :
+t20 := n - #1
+t21 := t20 * #4
+t22 := ldiag + t21
+*t22 := #1
+t29 := j * #4
+t30 := place + t29
+t31 := *t30
+IF t31 == #0 GOTO label12
+t23 := j * #4
+t24 := place + t23
+t25 := *t24
+t26 := t25 - #1
+t27 := t26 * #4
+t28 := ldiag + t27
+*t28 := #0
+LABEL label12 :
+k := n - #1
+LABEL label14 :
+IF k <= #0 GOTO label13
+t32 := k * #4
+t33 := rdiag + t32
+t34 := k - #1
+t35 := t34 * #4
+t36 := rdiag + t35
+t37 := *t36
+*t33 := t37
+k := k - #1
+GOTO label14
+LABEL label13 :
+*rdiag := #1
+t44 := j * #4
+t45 := place + t44
+t47 := *t45
+t46 := n - #1
+IF t47 == t46 GOTO label15
+t38 := j * #4
+t39 := place + t38
+t40 := *t39
+t41 := t40 + #1
+t42 := t41 * #4
+t43 := rdiag + t42
+*t43 := #0
+LABEL label15 :
+j := j + #1
+LABEL label9 :
+GOTO label8
+LABEL label7 :
+IF valid != #1 GOTO label18
+count := count + #1
+LABEL label18 :
+i := i - #1
+GOTO label4
+LABEL label23 :
+LABEL label20 :
+IF i < #0 GOTO label19
+t68 := i * #4
+t69 := place + t68
+t71 := *t69
+t70 := n - #1
+IF t71 < t70 GOTO label19
+t66 := i * #4
+t67 := place + t66
+*t67 := #-1
+i := i - #1
+GOTO label20
+LABEL label19 :
+IF i != #-1 GOTO label22
+cont := #0
+GOTO label21
+LABEL label22 :
+t72 := i * #4
+t73 := place + t72
+t74 := i * #4
+t75 := place + t74
+t76 := *t75
+t77 := t76 + #1
+*t73 := t77
+i := i + #1
+LABEL label21 :
+LABEL label4 :
+GOTO label3
+LABEL label2 :
+WRITE count
+RETURN #0

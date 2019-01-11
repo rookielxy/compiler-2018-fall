@@ -1,0 +1,20 @@
+FUNCTION main :
+i := #1
+j := #2
+k := #2
+IF i != j GOTO label4
+WRITE #1
+GOTO label0
+LABEL label4 :
+IF i >= j GOTO label3
+IF j != k GOTO label2
+WRITE #2
+GOTO label1
+LABEL label2 :
+WRITE #3
+LABEL label1 :
+GOTO label0
+LABEL label3 :
+WRITE #4
+LABEL label0 :
+RETURN #2

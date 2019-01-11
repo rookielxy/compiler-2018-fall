@@ -1,0 +1,21 @@
+FUNCTION fact :
+PARAM n
+IF n != #1 GOTO label1
+RETURN n
+LABEL label1 :
+t0 := n - #1
+ARG t0
+t1 := CALL fact
+t2 := n * t1
+RETURN t2
+FUNCTION main :
+READ m
+IF m <= #1 GOTO label3
+ARG m
+result := CALL fact
+GOTO label2
+LABEL label3 :
+result := #1
+LABEL label2 :
+WRITE result
+RETURN #0
