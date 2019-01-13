@@ -21,6 +21,7 @@ CodeBlock AstNode::translateProgram() {
 		extDefList = extDef->first_sibling;
 		extDef = extDefList->first_child;
 	}
+	
 	return ret;
 }
 

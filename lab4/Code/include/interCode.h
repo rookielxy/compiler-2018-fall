@@ -166,6 +166,10 @@ public:
 	bool optimizeOneRun();
 	bool optimizeOneBlock(list<InterCode>::iterator, list<InterCode>::iterator);
 	void redirectResult(Operand *redir);
+	vector<list<InterCode>::iterator> splitIntoBlock();
+
+	void assembleFunc();
+	void assembleOneBlock(list<InterCode>::iterator, list<InterCode>::iterator);
 };
 
 #endif

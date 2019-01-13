@@ -250,6 +250,8 @@ void CodeBlock::debug() {
 }
 
 void CodeBlock::optimize() {
+	if (code.empty())
+		return;
 	for (auto it = code.begin(); it != code.end();) {
 		if (it->kind == IR_EMPTY or it->kind == IR_BASIC_DEC)
 			it = code.erase(it);
@@ -336,40 +338,15 @@ bool CodeBlock::optimizeOneRun() {
 			}
 		}
 	}
-
+	
 	// seperate into several basic blocks
-	auto blockStart = code.begin(), blockEnd = code.begin();
-	while (true) {
-		blockStart = blockEnd;
-		while (blockStart != code.end()) {
-			enum interCodeType type = blockStart->kind;
-			if (type == IR_FUNC or type == IR_LABEL or type == IR_GOTO)
-				++blockStart;
-			else
-				break;
-		}
-		if (blockStart == code.end())
-			break;
-
-		blockEnd = blockStart;
-		bool endWithRelop = false;
-		while (blockEnd != code.end()) {
-			enum interCodeType type = blockEnd->kind;
-			if (type == IR_FUNC or type == IR_LABEL or type == IR_GOTO)
-				break;
-			if (type >= IR_RELOP_EQ and type <= IR_RELOP_LE)
-				endWithRelop = true;
-			else
-				if(endWithRelop) break;
-			++blockEnd;
-		}
-		
-		if(optimizeOneBlock(blockStart, blockEnd))
+	vector<list<InterCode>::iterator> firstIts = splitIntoBlock();
+	for (int i = 0; i < firstIts.size() - 1; ++i) {
+		auto blockStart = firstIts[i], blockEnd = firstIts[i + 1];
+		if (optimizeOneBlock(blockStart, blockEnd))
 			optimized = true;
-		if (blockEnd == code.end())
-			break;
-
 	}
+	
 	return optimized;
 }
 
@@ -407,4 +384,28 @@ bool CodeBlock::optimizeOneBlock(list<InterCode>::iterator begin, list<InterCode
 		}
 	}
 	return optimized;
+}
+
+
+vector<list<InterCode>::iterator> CodeBlock::splitIntoBlock() {
+	vector<list<InterCode>::iterator> firstIts;
+	assert(not code.empty());
+	firstIts.emplace_back(code.begin());
+	for (auto it = code.begin(); it != code.end(); ) {
+		enum interCodeType type = it->kind;
+		switch (type) {
+			case IR_FUNC: case IR_LABEL:
+				firstIts.emplace_back(it++);
+				break;
+			case IR_RELOP_EQ: case IR_RELOP_NEQ:
+			case IR_RELOP_GE: case IR_RELOP_LE:
+			case IR_RELOP_GT: case IR_RELOP_LT:
+			case IR_GOTO:
+				firstIts.emplace_back(++it);
+				break;
+			default: ++it; break;
+		}
+	}
+	firstIts.emplace_back(code.end());
+	return firstIts;
 }

@@ -92,6 +92,9 @@ public:
     CodeBlock translateArgs();
     
     enum interCodeType relopType();
+
+    void assemble();
+    void assembleExtDef();
 };
 
 extern string DICT[];
