@@ -269,12 +269,6 @@ void CodeBlock::debug() {
 void CodeBlock::optimize() {
 	if (code.empty())
 		return;
-	for (auto it = code.begin(); it != code.end();) {
-		if (it->kind == IR_EMPTY or it->kind == IR_BASIC_DEC)
-			it = code.erase(it);
-		else
-			++it;
-	}
 	while (optimizeOneRun());
 	Temp::reIndex();
 }

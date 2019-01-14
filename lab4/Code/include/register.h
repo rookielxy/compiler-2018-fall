@@ -17,11 +17,13 @@ enum Register {
 };
 
 class RegScheduler {
+	bool regs[NR_REG];
 	map<string, int> index;
 	vector<enum Register> map2Reg;
 	vector<int> liveness;
 
 	void addSymbol(Operand *op, int &idx);
+	void noteLiveness(Operand *op, int line);
 public:
 	RegScheduler(list<InterCode>::iterator, list<InterCode>::iterator);
 	enum Register ensure(string sym);

@@ -64,10 +64,29 @@ void CodeBlock::assembleFunc() {
 	assert(code.front().getType() == IR_FUNC);
 	printLabel(code.front().result->display());
 	code.pop_front();
-
+	int frame = 0;
+	for (auto it = code.begin(); it != code.end(); ++it) {
+		if (it->kind == IR_DEC) {
+			ConstOp *op = dynamic_cast<ConstOp*>(it->getResult());
+			assert(op == nullptr);
+			frame += op->getValue();
+		} else if (it->kind == IR_BASIC_DEC) {
+			frame += 4;
+		}
+	}
+	printInstruction("subi", "$sp", "$sp", to_string(frame));
 	
+
+	vector<list<InterCode>::iterator> firstIts = splitIntoBlock();
+	for (int i = 0; i < firstIts.size() - 1; ++i)
+		assembleOneBlock(firstIts[i], firstIts[i + 1]);
 }
 
 void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode>::iterator end) {
-	
+	int line = 0;
+	for (auto it = begin; it != end; ++it) {
+		switch (it->kind) {
+
+		}
+	} 
 }

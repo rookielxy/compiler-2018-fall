@@ -10,13 +10,24 @@ static string dict[] = {
 };
 
 RegScheduler::RegScheduler(list<InterCode>::iterator begin, list<InterCode>::iterator end) {
-	int idx = 0;
+	memset(regs, false, NR_REG*sizeof(bool));
+	int idx = 0, line = 0;
 	for (auto it = begin; it != end; ++it) {
 		addSymbol(it->result, idx);
 		addSymbol(it->op1, idx);
 		addSymbol(it->op2, idx);
+		++line;
 	}
-	
+	auto it = --end;
+	while (true) {
+		noteLiveness(it->result, line);
+		noteLiveness(it->op1, line);
+		noteLiveness(it->op2, line);
+		if (it == begin)
+			break;
+		--it;
+		--line;
+	}
 }
 
 string RegScheduler::displayReg(enum Register reg) {
@@ -32,5 +43,15 @@ void RegScheduler::addSymbol(Operand *op, int &idx) {
 			map2Reg.emplace_back(nullReg);
 			liveness.emplace_back(-1);
 		}
+	}
+}
+
+void RegScheduler::noteLiveness(Operand *op, int line) {
+	if (op->isSym()) {
+		string symName = op->display();
+		auto it = index.find(symName);
+		assert(it != index.end());
+		if (liveness[it->second] == - 1)
+			liveness[it->second] = line;
 	}
 }
