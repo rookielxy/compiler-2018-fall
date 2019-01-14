@@ -1,7 +1,39 @@
 #include "ast.h"
 
+static inline void printInstruction(string str) { cout << '\t' << str << endl; }
+static inline void printInstruction(string str1, string str2) { cout << '\t' << str1 << ' ' << str2 << endl; }
+static inline void printInstruction(string str1, string str2, string str3) {
+	cout << '\t' << str1 << ' ' << str2 << ", " << str3 << endl; 
+}
+static inline void printInstruction(string str1, string str2, string str3, string str4) {
+	cout << '\t' << str1 << ' ' << str2 << ",  " << str3 << ", " << str4 << endl;
+}
+static inline void printLabel(string str) { cout << str << ':' << endl; }
+
 void AstNode::assemble() {
 	assert(tag == TAG_PROGRAM);
+
+	cout << ".data" << endl
+		<< "_prompt: .asciiz \"Entering an integer:\""
+		<< "_ret: .asciiz \"\n\""
+		<< ".globl main"
+		<< ".text";
+	printLabel("read");
+	printInstruction("li", "$v0", "4");
+	printInstruction("la", "$a0", "_prompt");
+	printInstruction("syscall");
+	printInstruction("li", "$v0", "5");
+	printInstruction("syscall");
+	printInstruction("jr", "$ra");
+	printLabel("write");
+	printInstruction("li", "$v0", "1");
+	printInstruction("syscall");
+	printInstruction("li", "$v0", "4");
+	printInstruction("la", "$a0", "ret");
+	printInstruction("syscall");
+	printInstruction("move", "$v0", "$0");
+	printInstruction("jr", "$ra");
+
 	AstNode *extDefList = first_child,
 			*extDef = extDefList->first_child;
 	while (extDefList->tag != TAG_EMPTY) {
@@ -28,6 +60,11 @@ void AstNode::assembleExtDef() {
 }
 
 void CodeBlock::assembleFunc() {
+	assert(not code.empty());
+	assert(code.front().getType() == IR_FUNC);
+	printLabel(code.front().result->display());
+	code.pop_front();
+
 	
 }
 

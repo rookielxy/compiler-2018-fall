@@ -3,6 +3,23 @@
 vector<Temp *> Temp::temps;
 int Label::counter = 0;
 
+/*
+	format of 3-addr code:
+	case READ:		read result
+	case RSTAR:		result = *op1
+	case CALL:		result = call op1
+	case ASSIGN:	result = op1
+	case ADDR:		result = &op1
+	case WRITE:		write op1
+	case ARGS:		args op1
+	
+	case LSTAR:		*op1 = op2
+	case ADD:	case SUB:
+	case MUL:	case DIV:
+					result = op1 binop op2
+	
+ */
+
 InterCode::InterCode(enum interCodeType kind):
 			kind(kind), op1(nullptr), op2(nullptr), result(nullptr) {
 	switch (kind) {
