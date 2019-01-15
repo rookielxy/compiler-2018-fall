@@ -43,6 +43,7 @@ void AstNode::assembleExtDef() {
 			CodeBlock code;
 			code.append(funDec->translateFunDec());
 			code.append(compSt->translateCompSt());
+			code.debug();
 			code.assembleFunc();
 			break;
 		}
@@ -106,8 +107,8 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 				break;
 			}
 			case IR_ASSIGN: {
-				enum Reg reg0 = scheduler.ensure(it->op1, line);
-				enum Reg reg1 = scheduler.ensure(it->result, line);
+				enum Reg reg0 = scheduler.ensure(it->result, line);
+				enum Reg reg1 = scheduler.ensure(it->op1, line);
 				printInstruction("move", displayReg(reg0), displayReg(reg1));
 				scheduler.try_free(reg1, line);
 				break;

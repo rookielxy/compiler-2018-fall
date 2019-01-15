@@ -50,7 +50,7 @@ extern vector<StackValue> stackValue;
 class RegScheduler {
 	Register regs[NR_REG];
 	vector<RegSymbol> symbols;
-	void addSymbol(Operand *op, set<Operand*> &s);
+	void addSymbol(Operand *op, vector<Operand*> &s);
 	void noteLiveness(Operand *op, int line);
 	void spill(enum Reg, bool);
 	void free(enum Reg);

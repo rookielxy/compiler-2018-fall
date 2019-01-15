@@ -19,6 +19,27 @@ int Label::counter = 0;
 					result = op1 binop op2
 	
  */
+bool equal(Operand *op1, Operand *op2) {
+	if (op1->kind != op2->kind)
+		return false;
+	switch (op1->kind) {
+		case OP_VARIABLE:
+			return  equal(dynamic_cast<SymbolOp*>(op1), dynamic_cast<SymbolOp*>(op2));
+		case OP_TEMP:
+			return equal(dynamic_cast<Temp*>(op1), dynamic_cast<Temp*>(op2));
+		case OP_CONST:
+			return *dynamic_cast<ConstOp*>(op1), dynamic_cast<ConstOp*>(op2);
+		default: assert(false);
+	}
+}
+
+bool equal(Temp *t1, Temp *t2) {
+	return t1->tempIdx == t2->tempIdx;
+}
+
+bool equal(ConstOp *c1, ConstOp *c2) {
+	return c1->value == c2->value;
+}
 
 InterCode::InterCode(enum interCodeType kind):
 			kind(kind), op1(nullptr), op2(nullptr), result(nullptr) {

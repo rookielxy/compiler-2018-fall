@@ -15,9 +15,44 @@ write:
 	syscall
 	move $v0, $0
 	jr $ra
+IR_FUNC main 
+IR_BASIC_DEC a 
+IR_EMPTY #0 
+IR_ASSIGN a #0 
+IR_BASIC_DEC b 
+IR_EMPTY #1 
+IR_ASSIGN b #1 
+IR_BASIC_DEC i 
+IR_EMPTY #0 
+IR_ASSIGN i #0 
+IR_BASIC_DEC n 
+IR_EMPTY n 
+IR_READ n 
+IR_LABEL label1 
+IR_EMPTY i 
+IR_EMPTY n 
+IR_RELOP_GE label0 i n
+IR_BASIC_DEC c 
+IR_EMPTY a 
+IR_EMPTY b 
+IR_ADD c a b
+IR_EMPTY b 
+IR_WRITE b 
+IR_EMPTY a 
+IR_EMPTY b 
+IR_ASSIGN a b 
+IR_EMPTY b 
+IR_EMPTY c 
+IR_ASSIGN b c 
+IR_EMPTY i 
+IR_EMPTY i 
+IR_EMPTY #1 
+IR_ADD i i #1
+IR_GOTO label1 
+IR_LABEL label0 
+IR_EMPTY #0 
+IR_RETURN #0 
 main:
 	addi $sp,  $sp, -4
 	sw $fp, 0($sp)
 	move $fp, $sp
-	addi $sp,  $sp, -4
-	li $t0, 0

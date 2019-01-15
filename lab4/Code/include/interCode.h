@@ -28,7 +28,6 @@ enum interCodeType {
 	IR_READ, IR_WRITE
 };
 
-class InterCode;
 
 class Operand {
 protected:
@@ -38,12 +37,13 @@ public:
 	enum operandType getType() { return kind; };
 	virtual string display() = 0;
 	virtual bool isPtr() { return false; }
+	friend bool equal(Operand *op1, Operand *op2);
 };
 
+bool equal(Operand *op1, Operand *op2);
 
 class Temp : public Operand {
 	friend class CodeBlock;
-
 	static vector<Temp*> temps;
 
 	int tempIdx;
@@ -72,8 +72,11 @@ public:
 			}
 		}
 	}
+
+	friend bool equal(Temp *t1, Temp *t2);
 };
 
+bool equal(Temp *t1, Temp *t2);
 
 class Label : public Operand {
 	static int counter;
@@ -88,6 +91,7 @@ public:
 	string display() { 
 		return "label" + to_string(labelIdx); 
 	}
+
 };
 
 
@@ -102,8 +106,10 @@ public:
 	string display() { return "#" + to_string(value); }
 
 	int getValue() { return value; }
+	friend bool equal(ConstOp *c1, ConstOp *c2);
 };
 
+bool equal(ConstOp *c1, ConstOp *c2);
 
 class SymbolOp : public Operand {
 	string name;
@@ -117,6 +123,7 @@ public:
 
 	bool isPtr() { return not basic; }
 	string display() { return name; }
+	bool operator==(SymbolOp &sym) { return name == sym.name; }
 };
 
 
