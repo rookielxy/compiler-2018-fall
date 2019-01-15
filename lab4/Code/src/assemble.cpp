@@ -55,16 +55,20 @@ void CodeBlock::assembleFunc() {
 	assert(code.front().getType() == IR_FUNC);
 	printLabel(code.front().result->display());
 	code.pop_front();
+	printInstruction("addi", "$sp", "$sp", "-4");
+	printInstruction("sw", "$fp", "0($sp)");
+	printInstruction("move", "$fp", "$sp");
 
 	vector<list<InterCode>::iterator> firstIts = splitIntoBlock();
 	for (int i = 0; i < firstIts.size() - 1; ++i)
 		assembleOneBlock(firstIts[i], firstIts[i + 1]);
+	stackValue.clear();
 }
 
 void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode>::iterator end) {
 	int line = 0;
 	RegScheduler scheduler(begin, end);
-	for (auto it = begin; it != end; ++it) {
+	for (auto it = begin; it != end; ++it, ++line) {
 		switch (it->kind) {
 			case IR_LABEL: {
 				Label *label = dynamic_cast<Label*>(it->getResult());
@@ -86,23 +90,61 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 				printInstruction("lw", "$ra", "0($sp)");
 				printInstruction("addi", "$sp", "$sp", "4");
 				// TODO
-				//enum Register reg =  scheduler.allocate()
-				enum Reg reg = nullReg;
-				printInstruction("move", RegScheduler::displayReg(reg), "$v0");
-				// TODO:
-				// spill to memory
+				enum Reg reg = scheduler.ensure(it->getResult(), line);
+				printInstruction("move", displayReg(reg), "$v0");
 				break;
 			}
 			case IR_WRITE: {
-				// TODO:
-				enum Reg reg = nullReg;
-				printInstruction("move", "$a0", "%s", RegScheduler::displayReg(reg));
-				// TODO: free register
+				enum Reg reg = scheduler.ensure(it->op1, line);
+				printInstruction("move", "$a0", "%s", displayReg(reg));
 				printInstruction("addi", "$sp", "$sp", "-4");
 				printInstruction("sw", "$ra", "0($sp)");
 				printInstruction("jal", "write");
 				printInstruction("lw", "$ra", "0($sp)");
 				printInstruction("addi", "$sp", "$sp", "4");
+				break;
+			}
+			case IR_ASSIGN: {
+				enum Reg reg0 = scheduler.ensure(it->op1, line);
+				enum Reg reg1 = scheduler.ensure(it->result, line);
+				printInstruction("move", displayReg(reg0), displayReg(reg1));
+				scheduler.try_free(reg1, line);
+				break;
+			}
+			case IR_ADD: case IR_SUB: case IR_MUL: case IR_DIV: {
+				enum Reg reg0 = scheduler.ensure(it->result, line);
+				enum Reg reg1 = scheduler.ensure(it->op1, line);
+				enum Reg reg2 = scheduler.ensure(it->op2, line);
+				switch (it->kind) {
+					case IR_ADD:
+						printInstruction("add", displayReg(reg0), displayReg(reg1), displayReg(reg2));
+						break;
+					case IR_SUB:
+						printInstruction("sub", displayReg(reg0), displayReg(reg1), displayReg(reg2));
+						break;
+					case IR_MUL:
+						printInstruction("mul", displayReg(reg0), displayReg(reg1), displayReg(reg2));
+						break;
+					case IR_DIV:
+						printInstruction("div", displayReg(reg1), displayReg(reg2));
+						printInstruction("mflo", displayReg(reg0));
+						break;
+					default: assert(false);
+				}
+				scheduler.try_free(reg1, line);
+				scheduler.try_free(reg2, line);
+				break;
+			}
+			case IR_BASIC_DEC:
+				scheduler.addStackValue(it->result, 4);
+				break;
+			case IR_DEC: {
+				ConstOp *con = dynamic_cast<ConstOp*>(it->op1);
+				assert(con != nullptr);
+				scheduler.addStackValue(it->result, con->getValue());
+				break;
+			}
+			case IR_ADDR: {
 				break;
 			}
 			default: assert(false);

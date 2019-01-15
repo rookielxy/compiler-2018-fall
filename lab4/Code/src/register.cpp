@@ -1,6 +1,7 @@
 #include "register.h"
 #include "interCode.h"
 
+vector<StackValue> stackValue;
 
 static string dict[] = {
 	"$t0", "$t1", "$t2", "$t3", "$t4",
@@ -9,7 +10,7 @@ static string dict[] = {
 	"$s4", "$s5", "$s6", "$s7", "null"
 };
 
-string RegScheduler::displayReg(enum Reg reg) {
+string displayReg(enum Reg reg) {
 	return dict[reg];
 }
 
@@ -163,4 +164,11 @@ void RegScheduler::spill(enum Reg reg, bool dead) {
 	} else {
 		assert(false);
 	}
+}
+
+void RegScheduler::try_free(enum Reg reg, int line) {
+	assert(reg != nullReg);
+	int active = regs[reg].content->liveness;
+	if (active < line)
+		free(reg);
 }
