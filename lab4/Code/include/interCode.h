@@ -38,7 +38,6 @@ public:
 	enum operandType getType() { return kind; };
 	virtual string display() = 0;
 	virtual bool isPtr() { return false; }
-	bool isSym() { return (this != nullptr) and kind == OP_VARIABLE; }
 };
 
 

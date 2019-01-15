@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "register.h"
 
 static inline void printInstruction(string str) { cout << '\t' << str << endl; }
 static inline void printInstruction(string str1, string str2) { cout << '\t' << str1 << ' ' << str2 << endl; }
@@ -64,18 +65,6 @@ void CodeBlock::assembleFunc() {
 	assert(code.front().getType() == IR_FUNC);
 	printLabel(code.front().result->display());
 	code.pop_front();
-	int frame = 0;
-	for (auto it = code.begin(); it != code.end(); ++it) {
-		if (it->kind == IR_DEC) {
-			ConstOp *op = dynamic_cast<ConstOp*>(it->getResult());
-			assert(op == nullptr);
-			frame += op->getValue();
-		} else if (it->kind == IR_BASIC_DEC) {
-			frame += 4;
-		}
-	}
-	printInstruction("subi", "$sp", "$sp", to_string(frame));
-	
 
 	vector<list<InterCode>::iterator> firstIts = splitIntoBlock();
 	for (int i = 0; i < firstIts.size() - 1; ++i)
@@ -84,9 +73,49 @@ void CodeBlock::assembleFunc() {
 
 void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode>::iterator end) {
 	int line = 0;
+	RegScheduler scheduler(begin, end);
 	for (auto it = begin; it != end; ++it) {
 		switch (it->kind) {
-
+			case IR_LABEL: {
+				Label *label = dynamic_cast<Label*>(it->getResult());
+				assert(label != nullptr);
+				printLabel(label->display());
+				break;
+			}
+			case IR_FUNC: assert(false);
+			case IR_GOTO: {
+				Label *label = dynamic_cast<Label*>(it->getResult());
+				assert(label != nullptr);
+				printInstruction("j", label->display());
+				break;
+			}
+			case IR_READ: {
+				printInstruction("addi", "$sp", "$sp", "-4");
+				printInstruction("sw", "$ra", "0($sp)");
+				printInstruction("jal", "read");
+				printInstruction("lw", "$ra", "0($sp)");
+				printInstruction("addi", "$sp", "$sp", "4");
+				// TODO
+				//enum Register reg =  scheduler.allocate()
+				enum Reg reg = nullReg;
+				printInstruction("move", RegScheduler::displayReg(reg), "$v0");
+				// TODO:
+				// spill to memory
+				break;
+			}
+			case IR_WRITE: {
+				// TODO:
+				enum Reg reg = nullReg;
+				printInstruction("move", "$a0", "%s", RegScheduler::displayReg(reg));
+				// TODO: free register
+				printInstruction("addi", "$sp", "$sp", "-4");
+				printInstruction("sw", "$ra", "0($sp)");
+				printInstruction("jal", "write");
+				printInstruction("lw", "$ra", "0($sp)");
+				printInstruction("addi", "$sp", "$sp", "4");
+				break;
+			}
+			default: assert(false);
 		}
 	} 
 }

@@ -3,20 +3,28 @@
 
 
 static string dict[] = {
-	"t0", "t1", "t2", "t3", "t4",
-	"t5", "t6", "t7", "t8", "t9",
-	"s0", "s1", "s2", "s3",
-	"s4", "s5", "s6", "s7"
+	"$t0", "$t1", "$t2", "$t3", "$t4",
+	"$t5", "$t6", "$t7", "$t8", "$t9",
+	"$s0", "$s1", "$s2", "$s3",
+	"$s4", "$s5", "$s6", "$s7", "null"
 };
 
 RegScheduler::RegScheduler(list<InterCode>::iterator begin, list<InterCode>::iterator end) {
-	memset(regs, false, NR_REG*sizeof(bool));
-	int idx = 0, line = 0;
+	for (int i = 0; i < NR_REG; ++i)
+		regs[i].name = dict[i];
+
+	int line = 0;
+	set<Operand*> s;
 	for (auto it = begin; it != end; ++it) {
-		addSymbol(it->result, idx);
-		addSymbol(it->op1, idx);
-		addSymbol(it->op2, idx);
+		addSymbol(it->result, s);
+		addSymbol(it->op1, s);
+		addSymbol(it->op2, s);
 		++line;
+	}
+	for (auto it = s.begin(); it != s.end(); ++it) {
+		RegSymbol regSym;
+		regSym.op = *it;
+		symbols.emplace_back(regSym);
 	}
 	auto it = --end;
 	while (true) {
@@ -30,28 +38,29 @@ RegScheduler::RegScheduler(list<InterCode>::iterator begin, list<InterCode>::ite
 	}
 }
 
-string RegScheduler::displayReg(enum Register reg) {
+string RegScheduler::displayReg(enum Reg reg) {
 	return dict[reg];
 }
 
-void RegScheduler::addSymbol(Operand *op, int &idx) {
-	if (op->isSym()) {
-		string symName = op->display();
-		if (index.find(symName) == index.end()) {
-			index.insert(pair<string, int>(symName, idx));
-			++idx;
-			map2Reg.emplace_back(nullReg);
-			liveness.emplace_back(-1);
-		}
+void RegScheduler::addSymbol(Operand *op, set<Operand*> &s) {
+	if (op == nullptr)
+		return;
+	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP) {
+		if (s.find(op) == s.end())
+			s.insert(op);
 	}
 }
 
 void RegScheduler::noteLiveness(Operand *op, int line) {
-	if (op->isSym()) {
-		string symName = op->display();
-		auto it = index.find(symName);
-		assert(it != index.end());
-		if (liveness[it->second] == - 1)
-			liveness[it->second] = line;
+	if (op == nullptr)
+		return;
+	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP) {
+		for (auto it = symbols.begin(); it != symbols.end(); ++it) {
+			if (it->op == op and it->liveness == -1) {
+				it->liveness = line;
+				return;
+			}
+		}
+		assert(false);
 	}
 }
