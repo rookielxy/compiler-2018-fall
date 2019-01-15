@@ -46,24 +46,24 @@ struct Register {
 };
 
 extern vector<StackValue> stackValue;
+void addStackValue(Operand *op, int size);
+void addParamValue(Operand *op);
 
 class RegScheduler {
 	Register regs[NR_REG];
 	vector<RegSymbol> symbols;
-	
-
 	void addSymbol(Operand *op, set<Operand*> &s);
 	void noteLiveness(Operand *op, int line);
 	void spill(enum Reg, bool);
 	void free(enum Reg);
+
 public:
 	RegScheduler(list<InterCode>::iterator, list<InterCode>::iterator);
-	void addStackValue(Operand *op, int size);
-
-	enum Reg ensure(Operand *op, int line);
 	
+	enum Reg ensure(Operand *op, int line);
 	enum Reg allocate(Operand *op, int line);
 	void try_free(enum Reg, int line);
+	int operandStackOffset(Operand *op);
 };
 
 string displayReg(enum Reg);

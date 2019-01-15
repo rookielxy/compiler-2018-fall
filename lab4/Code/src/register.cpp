@@ -66,7 +66,7 @@ RegScheduler::RegScheduler(list<InterCode>::iterator begin, list<InterCode>::ite
 	}
 }
 
-void RegScheduler::addStackValue(Operand *op, int size) {
+void addStackValue(Operand *op, int size) {
 	assert(op != nullptr);
 	StackValue s;
 	s.size = size;
@@ -76,6 +76,17 @@ void RegScheduler::addStackValue(Operand *op, int size) {
 		s.offset = stackValue.back().offset + stackValue.back().size;
 	stackValue.emplace_back(s);
 	printInstruction("addi", "$sp", "$sp", to_string(-size));
+}
+
+void addParamValue(Operand *op) {
+	assert(op != nullptr);
+	StackValue s;
+	s.size = 4;
+	if (stackValue.empty())
+		s.offset = -4;
+	else 
+		s.offset = stackValue[0].offset - 4;
+	stackValue.insert(stackValue.begin(), s);
 }
 
 enum Reg RegScheduler::ensure(Operand *op, int line) {
@@ -157,6 +168,10 @@ void RegScheduler::spill(enum Reg reg, bool dead) {
 		int offset = content->onStack->offset;
 		printInstruction("sw", dict[reg], to_string(offset) + "($fp)");
 	} else if (content->op->getType() == OP_TEMP) {
+		if (not dead and content->onStack == nullptr) {
+			addStackValue(content->op, 4);
+			content->onStack = &stackValue.back();
+		}
 		if (not dead and content->onStack != nullptr) {
 			int offset = content->onStack->offset;
 			printInstruction("sw", dict[reg], to_string(offset) + "($fp)");
@@ -169,6 +184,18 @@ void RegScheduler::spill(enum Reg reg, bool dead) {
 void RegScheduler::try_free(enum Reg reg, int line) {
 	assert(reg != nullReg);
 	int active = regs[reg].content->liveness;
-	if (active < line)
+	if (active <= line)
 		free(reg);
+}
+
+int RegScheduler::operandStackOffset(Operand *op) {
+	assert(op != nullptr);
+	auto it = symbols.begin();
+	for (; it != symbols.end(); ++it) {
+		if (it->op == op)
+			break;
+	}
+	assert(it != symbols.end());
+	assert(it->onStack != nullptr);
+	return it->onStack->offset;
 }

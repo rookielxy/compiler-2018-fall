@@ -136,18 +136,84 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 				break;
 			}
 			case IR_BASIC_DEC:
-				scheduler.addStackValue(it->result, 4);
+				addStackValue(it->result, 4);
 				break;
 			case IR_DEC: {
 				ConstOp *con = dynamic_cast<ConstOp*>(it->op1);
 				assert(con != nullptr);
-				scheduler.addStackValue(it->result, con->getValue());
+				addStackValue(it->result, con->getValue());
 				break;
 			}
 			case IR_ADDR: {
+				enum Reg reg0 = scheduler.ensure(it->result, line);
+				printInstruction("la", displayReg(reg0), 
+							to_string(scheduler.operandStackOffset(it->op1)) + "($fp)");
+				break;
+			}
+			case IR_RSTAR: {
+				enum Reg reg0 = scheduler.ensure(it->result, line);
+				enum Reg reg1 = scheduler.ensure(it->op1, line);
+				printInstruction("lw", displayReg(reg0), "0(" + displayReg(reg1) + ")");
+				scheduler.try_free(reg1, line);
+				break;
+			}
+			case IR_LSTAR: {
+				enum Reg reg0 = scheduler.ensure(it->result, line);
+				enum Reg reg1 = scheduler.ensure(it->op1, line);
+				printInstruction("sw", displayReg(reg1), "0(" + displayReg(reg0) + ")" );
+				break;
+			}
+			case IR_RETURN: {
+				enum Reg reg0 = scheduler.ensure(it->result, line);
+				printInstruction("move", "$v0", displayReg(reg0));
+				printInstruction("move", "$sp", "$fp");
+				printInstruction("lw", "$fp", "0($sp)");
+				printInstruction("addi", "$sp", "$sp", "4");
+				printInstruction("jr", "$ra");
+				scheduler.try_free(reg0, line);
+				break;
+			}
+			case IR_ARGS: {
+				enum Reg reg0 = scheduler.ensure(it->result, line);
+				printInstruction("addi", "$sp", "$sp", "-4");
+				printInstruction("sw", displayReg(reg0), "0($sp)");
+				scheduler.try_free(reg0, line);
+				break;
+			}
+			case IR_CALL: {
+				printInstruction("addi", "$sp", "$sp", "-4");
+				printInstruction("sw", "$ra", "0($sp)");
+				printInstruction("jal", it->op1->display());
+				printInstruction("lw", "$ra", "0($sp)");
+				printInstruction("addi", "$sp", "$sp", "4");
+				enum Reg reg0 = scheduler.ensure(it->result, line);
+				printInstruction("move", displayReg(reg0), "$v0");
+				scheduler.try_free(reg0, line);
+				break;
+			}
+			case IR_PARAM: {
+				addParamValue(it->result);
+				break;
+			}
+			case IR_RELOP_EQ: case IR_RELOP_NEQ:
+			case IR_RELOP_GE: case IR_RELOP_LE:
+			case IR_RELOP_LT: case IR_RELOP_GT: {
+				string ins;
+				switch (it->kind) {
+					case IR_RELOP_EQ: ins = "beq"; break;
+					case IR_RELOP_NEQ: ins = "bne"; break;
+					case IR_RELOP_GT: ins = "bgt"; break;
+					case IR_RELOP_LT: ins = "blt"; break;
+					case IR_RELOP_GE: ins = "bge"; break;
+					case IR_RELOP_LE: ins = "ble"; break;
+					default: assert(false);
+				}
+				enum Reg reg0 = scheduler.ensure(it->op1, line);
+				enum Reg reg1 = scheduler.ensure(it->op2, line);
+				printInstruction(displayReg(reg0), displayReg(reg1), it->result->display());
 				break;
 			}
 			default: assert(false);
 		}
-	} 
+	}
 }
