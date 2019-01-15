@@ -28,7 +28,7 @@ bool equal(Operand *op1, Operand *op2) {
 		case OP_TEMP:
 			return equal(dynamic_cast<Temp*>(op1), dynamic_cast<Temp*>(op2));
 		case OP_CONST:
-			return *dynamic_cast<ConstOp*>(op1), dynamic_cast<ConstOp*>(op2);
+			return equal(dynamic_cast<ConstOp*>(op1), dynamic_cast<ConstOp*>(op2));
 		default: assert(false);
 	}
 }
@@ -39,6 +39,10 @@ bool equal(Temp *t1, Temp *t2) {
 
 bool equal(ConstOp *c1, ConstOp *c2) {
 	return c1->value == c2->value;
+}
+
+bool equal(SymbolOp *s1, SymbolOp *s2) {
+	return s1->name == s2->name;
 }
 
 InterCode::InterCode(enum interCodeType kind):

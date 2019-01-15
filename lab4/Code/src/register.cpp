@@ -19,8 +19,8 @@ void RegScheduler::addSymbol(Operand *op, vector<Operand*> &s) {
 		return;
 	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP or op->getType() == OP_CONST) {
 		bool find = false;
-		for (auto ele : s) {
-			if (equal(ele, op)) {
+		for (int i = 0; i < s.size(); ++i) {
+			if (equal(s[i], op)) {
 				find = true;
 				break;
 			}
@@ -34,8 +34,10 @@ void RegScheduler::noteLiveness(Operand *op, int line) {
 	if (op == nullptr)
 		return;
 	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP or op->getType() == OP_CONST) {
+		if (symbols.empty())
+			return;
 		for (auto it = symbols.begin(); it != symbols.end(); ++it) {
-			if (it->op == op) {
+			if (equal(it->op, op)) {
 				if (it->liveness == -1)
 					it->liveness = line;
 				return;
@@ -78,6 +80,7 @@ void RegScheduler::addStackValue(Operand *op, int size) {
 	assert(op != nullptr);
 	StackValue s;
 	s.size = size;
+	s.op = op;
 	if (stackValue.empty())
 		s.offset = 0;
 	else
@@ -86,7 +89,7 @@ void RegScheduler::addStackValue(Operand *op, int size) {
 	printInstruction("addi", "$sp", "$sp", to_string(-size));
 	auto it = symbols.begin();
 	for (; it != symbols.end(); ++it) {
-		if (it->op == op) {
+		if (equal(it->op, op)) {
 			assert(it->onStack == nullptr);
 			it->onStack = &stackValue.back();
 			break;
@@ -99,14 +102,15 @@ void RegScheduler::addParamValue(Operand *op) {
 	assert(op != nullptr);
 	StackValue s;
 	s.size = 4;
+	s.op = op;
 	if (stackValue.empty())
-		s.offset = -4;
+		s.offset = -8;
 	else 
 		s.offset = stackValue[0].offset - 4;
 	stackValue.insert(stackValue.begin(), s);
 	auto it = symbols.begin();
 	for (; it != symbols.end(); ++it) {
-		if (it->op == op) {
+		if (equal(it->op, op)) {
 			assert(it->onStack == nullptr);
 			it->onStack = &stackValue[0];
 			break;
@@ -119,7 +123,7 @@ enum Reg RegScheduler::ensure(Operand *op, int line) {
 	assert(op != nullptr);
 	auto it = symbols.begin();
 	for (; it != symbols.end(); ++it) {
-		if (it->op == op)
+		if (equal(it->op, op))
 			break;
 	}
 	assert(it != symbols.end());
@@ -132,7 +136,17 @@ enum Reg RegScheduler::ensure(Operand *op, int line) {
 		assert(con != nullptr);
 		printInstruction("li", dict[it->reg], to_string(con->getValue()));
 	} else if (op->getType() == OP_VARIABLE) {
-		assert(it->onStack != nullptr);
+		if (it->onStack == nullptr) {
+			bool find = false;
+			for (int i = 0; i < stackValue.size(); ++i) {
+				if (equal(op, stackValue[i].op)) {
+					find = true;
+					it->onStack = &stackValue[i];
+					break;
+				}
+			}
+			assert(find);
+		}
 		int offset = it->onStack->offset;
 		printInstruction("lw", dict[it->reg], to_string(-offset) + "($fp)");
 	} else if (op->getType() == OP_TEMP){
@@ -155,7 +169,7 @@ enum Reg RegScheduler::allocate(Operand *op, int line) {
 	assert (op != nullptr);
 	auto it = symbols.begin();
 	for (; it != symbols.end(); ++it) {
-		if (it->op == op)
+		if (equal(it->op, op))
 			break;
 	}
 	assert(it != symbols.end());
@@ -192,7 +206,7 @@ void RegScheduler::spill(enum Reg reg, bool dead) {
 	if (content->op->getType() == OP_VARIABLE) {
 		assert(content->onStack != nullptr);
 		int offset = content->onStack->offset;
-		printInstruction("sw", dict[reg], to_string(offset) + "($fp)");
+		printInstruction("sw", dict[reg], to_string(-offset) + "($fp)");
 	} else if (content->op->getType() == OP_TEMP) {
 		if (not dead and content->onStack == nullptr) {
 			addStackValue(content->op, 4);
@@ -200,7 +214,7 @@ void RegScheduler::spill(enum Reg reg, bool dead) {
 		}
 		if (not dead and content->onStack != nullptr) {
 			int offset = content->onStack->offset;
-			printInstruction("sw", dict[reg], to_string(offset) + "($fp)");
+			printInstruction("sw", dict[reg], to_string(-offset) + "($fp)");
 		}
 	} else {
 		assert(false);
@@ -218,10 +232,27 @@ int RegScheduler::operandStackOffset(Operand *op) {
 	assert(op != nullptr);
 	auto it = symbols.begin();
 	for (; it != symbols.end(); ++it) {
-		if (it->op == op)
+		if (equal(it->op, op))
 			break;
 	}
 	assert(it != symbols.end());
 	assert(it->onStack != nullptr);
 	return it->onStack->offset;
+}
+
+void RegScheduler::spillAllReg() {
+	for (int i = 0; i < NR_REG; ++i) {
+		if (regs[i].unused)
+			continue;
+		regs[i].unused = true;
+		if (regs[i].content == nullptr)
+			continue;
+		if (regs[i].content->op->getType() == OP_VARIABLE) {
+			int offset = regs[i].content->onStack->offset;
+			printInstruction("sw", dict[i], to_string(-offset) + "($fp)");
+			regs[i].content = nullptr;
+		}
+	}
+	for (int i = 0; i < symbols.size(); ++i)
+		symbols[i].reg = nullReg;
 }

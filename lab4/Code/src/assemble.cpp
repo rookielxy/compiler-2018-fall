@@ -5,10 +5,10 @@ void AstNode::assemble() {
 	assert(tag == TAG_PROGRAM);
 
 	cout << ".data" << endl
-		<< "_prompt: .asciiz \"Entering an integer:\""
-		<< "_ret: .asciiz \"\n\""
-		<< ".globl main"
-		<< ".text";
+		<< "_prompt: .asciiz \"Entering an integer:\"" << endl
+		<< "_ret: .asciiz \"\\n\"" << endl
+		<< ".globl main" << endl
+		<< ".text" << endl;
 	printLabel("read");
 	printInstruction("li", "$v0", "4");
 	printInstruction("la", "$a0", "_prompt");
@@ -20,7 +20,7 @@ void AstNode::assemble() {
 	printInstruction("li", "$v0", "1");
 	printInstruction("syscall");
 	printInstruction("li", "$v0", "4");
-	printInstruction("la", "$a0", "ret");
+	printInstruction("la", "$a0", "_ret");
 	printInstruction("syscall");
 	printInstruction("move", "$v0", "$0");
 	printInstruction("jr", "$ra");
@@ -43,7 +43,7 @@ void AstNode::assembleExtDef() {
 			CodeBlock code;
 			code.append(funDec->translateFunDec());
 			code.append(compSt->translateCompSt());
-			code.debug();
+			//code.debug();
 			code.assembleFunc();
 			break;
 		}
@@ -60,6 +60,7 @@ void CodeBlock::assembleFunc() {
 	printInstruction("sw", "$fp", "0($sp)");
 	printInstruction("move", "$fp", "$sp");
 
+	stackValue.reserve(100);
 	vector<list<InterCode>::iterator> firstIts = splitIntoBlock();
 	for (int i = 0; i < firstIts.size() - 1; ++i)
 		assembleOneBlock(firstIts[i], firstIts[i + 1]);
@@ -69,6 +70,8 @@ void CodeBlock::assembleFunc() {
 void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode>::iterator end) {
 	int line = 0;
 	RegScheduler scheduler(begin, end);
+	bool endWithJump = false;
+
 	for (auto it = begin; it != end; ++it, ++line) {
 		switch (it->kind) {
 			case IR_EMPTY: break;
@@ -82,10 +85,13 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 			case IR_GOTO: {
 				Label *label = dynamic_cast<Label*>(it->getResult());
 				assert(label != nullptr);
+				endWithJump = true;
+				scheduler.spillAllReg();
 				printInstruction("j", label->display());
 				break;
 			}
 			case IR_READ: {
+				scheduler.spillAllReg();
 				printInstruction("addi", "$sp", "$sp", "-4");
 				printInstruction("sw", "$ra", "0($sp)");
 				printInstruction("jal", "read");
@@ -97,8 +103,9 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 				break;
 			}
 			case IR_WRITE: {
+				scheduler.spillAllReg();
 				enum Reg reg = scheduler.ensure(it->op1, line);
-				printInstruction("move", "$a0", "%s", displayReg(reg));
+				printInstruction("move", "$a0", displayReg(reg));
 				printInstruction("addi", "$sp", "$sp", "-4");
 				printInstruction("sw", "$ra", "0($sp)");
 				printInstruction("jal", "write");
@@ -176,13 +183,14 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 				break;
 			}
 			case IR_ARGS: {
-				enum Reg reg0 = scheduler.ensure(it->result, line);
+				enum Reg reg0 = scheduler.ensure(it->op1, line);
 				printInstruction("addi", "$sp", "$sp", "-4");
 				printInstruction("sw", displayReg(reg0), "0($sp)");
 				scheduler.try_free(reg0, line);
 				break;
 			}
 			case IR_CALL: {
+				scheduler.spillAllReg();
 				printInstruction("addi", "$sp", "$sp", "-4");
 				printInstruction("sw", "$ra", "0($sp)");
 				printInstruction("jal", it->op1->display());
@@ -212,10 +220,14 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 				}
 				enum Reg reg0 = scheduler.ensure(it->op1, line);
 				enum Reg reg1 = scheduler.ensure(it->op2, line);
-				printInstruction(displayReg(reg0), displayReg(reg1), it->result->display());
+				endWithJump = true;
+				scheduler.spillAllReg();
+				printInstruction(ins, displayReg(reg0), displayReg(reg1), it->result->display());
 				break;
 			}
 			default: cout << it->kind << endl; assert(false);
 		}
 	}
+	if (not endWithJump)
+		scheduler.spillAllReg();
 }

@@ -123,9 +123,10 @@ public:
 
 	bool isPtr() { return not basic; }
 	string display() { return name; }
-	bool operator==(SymbolOp &sym) { return name == sym.name; }
+	friend bool equal(SymbolOp *s1, SymbolOp *s2);
 };
 
+bool equal(SymbolOp *s1, SymbolOp *s2);
 
 class FuncOp : public Operand {
 	string name;

@@ -19,6 +19,7 @@ enum Reg {
 struct StackValue {
 	int offset;
 	int size;
+	Operand *op;
 };
 
 struct RegSymbol {
@@ -46,6 +47,7 @@ struct Register {
 };
 
 extern vector<StackValue> stackValue;
+extern vector<RegSymbol> variables;
 
 class RegScheduler {
 	Register regs[NR_REG];
@@ -64,6 +66,7 @@ public:
 	enum Reg allocate(Operand *op, int line);
 	void try_free(enum Reg, int line);
 	int operandStackOffset(Operand *op);
+	void spillAllReg();
 };
 
 string displayReg(enum Reg);
