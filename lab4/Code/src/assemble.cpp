@@ -70,6 +70,7 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 	RegScheduler scheduler(begin, end);
 	for (auto it = begin; it != end; ++it, ++line) {
 		switch (it->kind) {
+			case IR_EMPTY: break;
 			case IR_LABEL: {
 				Label *label = dynamic_cast<Label*>(it->getResult());
 				assert(label != nullptr);
@@ -136,12 +137,12 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 				break;
 			}
 			case IR_BASIC_DEC:
-				addStackValue(it->result, 4);
+				scheduler.addStackValue(it->result, 4);
 				break;
 			case IR_DEC: {
 				ConstOp *con = dynamic_cast<ConstOp*>(it->op1);
 				assert(con != nullptr);
-				addStackValue(it->result, con->getValue());
+				scheduler.addStackValue(it->result, con->getValue());
 				break;
 			}
 			case IR_ADDR: {
@@ -192,7 +193,7 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 				break;
 			}
 			case IR_PARAM: {
-				addParamValue(it->result);
+				scheduler.addParamValue(it->result);
 				break;
 			}
 			case IR_RELOP_EQ: case IR_RELOP_NEQ:
@@ -213,7 +214,7 @@ void CodeBlock::assembleOneBlock(list<InterCode>::iterator begin, list<InterCode
 				printInstruction(displayReg(reg0), displayReg(reg1), it->result->display());
 				break;
 			}
-			default: assert(false);
+			default: cout << it->kind << endl; assert(false);
 		}
 	}
 }

@@ -1,8 +1,0 @@
-DEC c_var 96
-c := &c_var
-FUNCTION main :
-DEC a_var 24
-a := &a_var
-DEC b_var 48
-b := &b_var
-RETURN #0

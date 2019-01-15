@@ -221,6 +221,7 @@ CodeBlock AstNode::translateDec() {
 				if (expCode.getResult()->isPtr())
 					expCode.append(InterCode(IR_RSTAR, expCode.getResult()));
 				InterCode assign = InterCode(IR_ASSIGN, code.getResult(), expCode.getResult());
+				ret.append(code);
 				ret.append(expCode);
 				ret.redirectResult(code.getResult());
 			} else {

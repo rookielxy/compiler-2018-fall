@@ -46,8 +46,6 @@ struct Register {
 };
 
 extern vector<StackValue> stackValue;
-void addStackValue(Operand *op, int size);
-void addParamValue(Operand *op);
 
 class RegScheduler {
 	Register regs[NR_REG];
@@ -59,7 +57,9 @@ class RegScheduler {
 
 public:
 	RegScheduler(list<InterCode>::iterator, list<InterCode>::iterator);
-	
+	void addStackValue(Operand *op, int size);
+	void addParamValue(Operand *op);
+
 	enum Reg ensure(Operand *op, int line);
 	enum Reg allocate(Operand *op, int line);
 	void try_free(enum Reg, int line);

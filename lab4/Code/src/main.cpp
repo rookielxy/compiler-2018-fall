@@ -30,7 +30,7 @@ int main(int argc , char **argv) {
 	yyparse();
 	astRoot->syntaxParse();
 	if (semanticCorrect)
-		astRoot->translate();
+		astRoot->assemble();
 	fclose(f);
 	return 0;
 }

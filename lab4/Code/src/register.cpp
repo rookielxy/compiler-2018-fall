@@ -17,7 +17,7 @@ string displayReg(enum Reg reg) {
 void RegScheduler::addSymbol(Operand *op, set<Operand*> &s) {
 	if (op == nullptr)
 		return;
-	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP) {
+	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP or op->getType() == OP_CONST) {
 		if (s.find(op) == s.end())
 			s.insert(op);
 	}
@@ -26,10 +26,11 @@ void RegScheduler::addSymbol(Operand *op, set<Operand*> &s) {
 void RegScheduler::noteLiveness(Operand *op, int line) {
 	if (op == nullptr)
 		return;
-	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP) {
+	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP or op->getType() == OP_CONST) {
 		for (auto it = symbols.begin(); it != symbols.end(); ++it) {
-			if (it->op == op and it->liveness == -1) {
-				it->liveness = line;
+			if (it->op == op) {
+				if (it->liveness == -1)
+					it->liveness = line;
 				return;
 			}
 		}
@@ -66,7 +67,7 @@ RegScheduler::RegScheduler(list<InterCode>::iterator begin, list<InterCode>::ite
 	}
 }
 
-void addStackValue(Operand *op, int size) {
+void RegScheduler::addStackValue(Operand *op, int size) {
 	assert(op != nullptr);
 	StackValue s;
 	s.size = size;
@@ -78,7 +79,7 @@ void addStackValue(Operand *op, int size) {
 	printInstruction("addi", "$sp", "$sp", to_string(-size));
 }
 
-void addParamValue(Operand *op) {
+void RegScheduler::addParamValue(Operand *op) {
 	assert(op != nullptr);
 	StackValue s;
 	s.size = 4;
