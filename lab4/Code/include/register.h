@@ -16,25 +16,28 @@ enum Reg {
 	nullReg
 };
 
+struct StackValue {
+	int offset;
+	int size;
+};
+
 struct RegSymbol {
 	Operand *op;
+	StackValue *onStack;
 	int liveness;
 	enum Reg reg;
 	RegSymbol() {
 		op = nullptr;
+		onStack = nullptr;
 		liveness = -1;
 		reg = nullReg;
 	}
 };
 
-struct StackValue {
-	RegSymbol *regSym;
-	int offset;
-};
 
 struct Register {
 	string name;
-	StackValue *content;
+	RegSymbol *content;
 	bool unused;
 	Register() {
 		content = nullptr;
@@ -51,10 +54,24 @@ class RegScheduler {
 	void noteLiveness(Operand *op, int line);
 public:
 	RegScheduler(list<InterCode>::iterator, list<InterCode>::iterator);
-	enum Reg ensure(string sym);
+	void addStackValue(Operand *op, int size);
+
+	enum Reg ensure(Operand *op, int line);
 	static string displayReg(enum Reg);
 	void free(enum Reg);
-	enum Reg allocate(string sym);
+	enum Reg allocate(Operand *op, int line);
+	void spill(enum Reg, bool);
 };
+
+inline void printInstruction(string str) { cout << '\t' << str << endl; }
+inline void printInstruction(string str1, string str2) { cout << '\t' << str1 << ' ' << str2 << endl; }
+inline void printInstruction(string str1, string str2, string str3) {
+	cout << '\t' << str1 << ' ' << str2 << ", " << str3 << endl; 
+}
+inline void printInstruction(string str1, string str2, string str3, string str4) {
+	cout << '\t' << str1 << ' ' << str2 << ",  " << str3 << ", " << str4 << endl;
+}
+inline void printLabel(string str) { cout << str << ':' << endl; }
+
 
 #endif

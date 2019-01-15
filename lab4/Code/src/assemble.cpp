@@ -1,16 +1,6 @@
 #include "ast.h"
 #include "register.h"
 
-static inline void printInstruction(string str) { cout << '\t' << str << endl; }
-static inline void printInstruction(string str1, string str2) { cout << '\t' << str1 << ' ' << str2 << endl; }
-static inline void printInstruction(string str1, string str2, string str3) {
-	cout << '\t' << str1 << ' ' << str2 << ", " << str3 << endl; 
-}
-static inline void printInstruction(string str1, string str2, string str3, string str4) {
-	cout << '\t' << str1 << ' ' << str2 << ",  " << str3 << ", " << str4 << endl;
-}
-static inline void printLabel(string str) { cout << str << ':' << endl; }
-
 void AstNode::assemble() {
 	assert(tag == TAG_PROGRAM);
 

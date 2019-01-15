@@ -9,6 +9,33 @@ static string dict[] = {
 	"$s4", "$s5", "$s6", "$s7", "null"
 };
 
+string RegScheduler::displayReg(enum Reg reg) {
+	return dict[reg];
+}
+
+void RegScheduler::addSymbol(Operand *op, set<Operand*> &s) {
+	if (op == nullptr)
+		return;
+	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP) {
+		if (s.find(op) == s.end())
+			s.insert(op);
+	}
+}
+
+void RegScheduler::noteLiveness(Operand *op, int line) {
+	if (op == nullptr)
+		return;
+	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP) {
+		for (auto it = symbols.begin(); it != symbols.end(); ++it) {
+			if (it->op == op and it->liveness == -1) {
+				it->liveness = line;
+				return;
+			}
+		}
+		assert(false);
+	}
+}
+
 RegScheduler::RegScheduler(list<InterCode>::iterator begin, list<InterCode>::iterator end) {
 	for (int i = 0; i < NR_REG; ++i)
 		regs[i].name = dict[i];
@@ -38,29 +65,102 @@ RegScheduler::RegScheduler(list<InterCode>::iterator begin, list<InterCode>::ite
 	}
 }
 
-string RegScheduler::displayReg(enum Reg reg) {
-	return dict[reg];
+void RegScheduler::addStackValue(Operand *op, int size) {
+	assert(op != nullptr);
+	StackValue s;
+	s.size = size;
+	if (stackValue.empty())
+		s.offset = 0;
+	else
+		s.offset = stackValue.back().offset + stackValue.back().size;
+	stackValue.emplace_back(s);
+	printInstruction("addi", "$sp", "$sp", to_string(-size));
 }
 
-void RegScheduler::addSymbol(Operand *op, set<Operand*> &s) {
-	if (op == nullptr)
-		return;
-	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP) {
-		if (s.find(op) == s.end())
-			s.insert(op);
+enum Reg RegScheduler::ensure(Operand *op, int line) {
+	assert(op != nullptr);
+	auto it = symbols.begin();
+	for (; it != symbols.end(); ++it) {
+		if (it->op == op)
+			break;
 	}
+	assert(it != symbols.end());
+	if (it->reg != nullReg)
+		return it->reg;
+	it->reg = allocate(op, line);
+
+	if (op->getType() == OP_CONST) {
+		ConstOp *con = dynamic_cast<ConstOp*>(op);
+		assert(con != nullptr);
+		printInstruction("li", dict[it->reg], to_string(con->getValue()));
+	} else if (op->getType() == OP_VARIABLE) {
+		assert(it->onStack != nullptr);
+		int offset = it->onStack->offset;
+		printInstruction("lw", dict[it->reg], to_string(offset) + "($fp)");
+	} else if (op->getType() == OP_TEMP){
+		if (it->onStack != nullptr)
+			printInstruction("lw", dict[it->reg], to_string(it->onStack->offset) + "($fp)");
+	} else {
+		assert(false);
+	}
+	return it->reg;
 }
 
-void RegScheduler::noteLiveness(Operand *op, int line) {
-	if (op == nullptr)
-		return;
-	if (op->getType() == OP_VARIABLE or op->getType() == OP_TEMP) {
-		for (auto it = symbols.begin(); it != symbols.end(); ++it) {
-			if (it->op == op and it->liveness == -1) {
-				it->liveness = line;
-				return;
-			}
+void RegScheduler::free(enum Reg reg) {
+	regs[reg].unused = true;
+	RegSymbol *regSym = regs[reg].content;
+	regSym->reg = nullReg;
+	regs[reg].content = nullptr;
+}
+
+enum Reg RegScheduler::allocate(Operand *op, int line) {
+	assert (op != nullptr);
+	auto it = symbols.begin();
+	for (; it != symbols.end(); ++it) {
+		if (it->op == op)
+			break;
+	}
+	assert(it != symbols.end());
+	for (int i = 0; i < NR_REG; ++i) {
+		if (regs[i].unused) {
+			regs[i].unused = false;
+			regs[i].content = &(*it);
+			return (enum Reg)(t0 + i);
 		}
+	}
+	for (int i = 0; i < NR_REG; ++i) {
+		if (regs[i].content->liveness < line) {
+			spill((enum Reg)(t0 + i), true);
+			regs[i].content = &(*it);
+			return (enum Reg)(t0 + i);
+		}
+	}
+	int max = -1, idx = -1;
+	for (int i = 0; i < NR_REG; ++i) {
+		if (regs[i].content->liveness > max) {
+			max = regs[i].content->liveness;
+			idx = i;
+		}
+	}
+	assert(idx != -1);
+	spill((enum Reg)(t0 + idx), false);
+	regs[idx].content = &(*it);
+	return (enum Reg)(t0 + idx);
+}
+
+void RegScheduler::spill(enum Reg reg, bool dead) {
+	assert(not regs[reg].unused);
+	RegSymbol *content = regs[reg].content;
+	if (content->op->getType() == OP_VARIABLE) {
+		assert(content->onStack != nullptr);
+		int offset = content->onStack->offset;
+		printInstruction("sw", dict[reg], to_string(offset) + "($fp)");
+	} else if (content->op->getType() == OP_TEMP) {
+		if (not dead and content->onStack != nullptr) {
+			int offset = content->onStack->offset;
+			printInstruction("sw", dict[reg], to_string(offset) + "($fp)");
+		}
+	} else {
 		assert(false);
 	}
 }
