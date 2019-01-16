@@ -46,8 +46,7 @@ struct Register {
 	}
 };
 
-extern vector<StackValue> stackValue;
-extern vector<RegSymbol> variables;
+extern list<StackValue> stackValue;
 
 class RegScheduler {
 	Register regs[NR_REG];
@@ -66,7 +65,8 @@ public:
 	enum Reg allocate(Operand *op, int line);
 	void try_free(enum Reg, int line);
 	int operandStackOffset(Operand *op);
-	void spillAllReg();
+	void spillAllReg(int line);
+	void freeAllReg();
 };
 
 string displayReg(enum Reg);

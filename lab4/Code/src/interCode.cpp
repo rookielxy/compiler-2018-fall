@@ -20,6 +20,8 @@ int Label::counter = 0;
 	
  */
 bool equal(Operand *op1, Operand *op2) {
+	if (op1 == nullptr or op2 == nullptr)
+		return false;
 	if (op1->kind != op2->kind)
 		return false;
 	switch (op1->kind) {
@@ -431,7 +433,9 @@ vector<list<InterCode>::iterator> CodeBlock::splitIntoBlock() {
 		enum interCodeType type = it->kind;
 		switch (type) {
 			case IR_FUNC: case IR_LABEL:
-				firstIts.emplace_back(it++);
+				if (it != firstIts.back())
+					firstIts.emplace_back(it);
+				++it;
 				break;
 			case IR_RELOP_EQ: case IR_RELOP_NEQ:
 			case IR_RELOP_GE: case IR_RELOP_LE:
